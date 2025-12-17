@@ -32,14 +32,19 @@ Promise.all([
   faceapi.nets.faceLandmark68Net.loadFromUri("/models")
 ]);
 
-// Host creates meeting
+// Generate meeting code
 window.onload = () => {
   roomId = Math.random().toString(36).substring(2, 8).toUpperCase();
-  isHost = true;
   document.getElementById("roomInput").value = roomId;
 };
 
-// Join meeting
+// HOST starts meeting
+function startAsHost() {
+  isHost = true;
+  startCall();
+}
+
+// Participant joins meeting
 function joinMeeting() {
   const input = document.getElementById("roomInput").value.trim();
   if (!input) return alert("Enter meeting code");
@@ -49,7 +54,7 @@ function joinMeeting() {
   startCall();
 }
 
-// Start call
+// Start call (common)
 function startCall() {
   joinSection.style.display = "none";
   videoSection.style.display = "flex";
@@ -88,7 +93,7 @@ socket.on("emotion-update", (emotion) => {
   updateStats();
 });
 
-// Update counts + percentages + overall mood
+// Update stats + percentages + chart
 function updateStats() {
   const total = Object.values(emotionCounts).reduce((a, b) => a + b, 0);
   if (total === 0) return;
@@ -164,6 +169,7 @@ socket.on("offer", async (offer) => {
 
 socket.on("answer", ans => peerConnection.setRemoteDescription(ans));
 socket.on("ice-candidate", c => peerConnection?.addIceCandidate(c));
+
 
 
 

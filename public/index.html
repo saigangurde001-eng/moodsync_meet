@@ -28,7 +28,7 @@
     button {
       padding: 6px 12px;
       font-size: 16px;
-      margin-left: 5px;
+      margin: 5px;
       cursor: pointer;
     }
 
@@ -72,11 +72,15 @@
 
   <h2>MoodSync Meet</h2>
 
-  <!-- JOIN SECTION -->
+  <!-- JOIN / HOST SECTION -->
   <div id="joinSection">
-    <p><b>Enter Meeting Code</b></p>
+    <p><b>Meeting Code</b></p>
     <input type="text" id="roomInput" placeholder="Meeting Code">
-    <button onclick="joinMeeting()">Join</button>
+
+    <br><br>
+
+    <button onclick="startAsHost()">Start Meeting (Host)</button>
+    <button onclick="joinMeeting()">Join as Participant</button>
   </div>
 
   <!-- VIDEO -->
@@ -112,6 +116,7 @@
 
 </body>
 </html>
+
 
 
 
