@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>MoodSync Meet</title>
+
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: #f4f4f4;
+      text-align: center;
+    }
+
+    h2 {
+      margin-top: 20px;
+    }
+
+    video {
+      width: 45%;
+      margin: 10px;
+      border: 2px solid #333;
+      border-radius: 8px;
+      background: black;
+    }
+
+    .videos {
+      display: flex;
+      justify-content: center;
+      flex-wrap: wrap;
+    }
+
+    .dashboard {
+      margin-top: 20px;
+      background: white;
+      padding: 15px;
+      border-radius: 8px;
+      width: 60%;
+      margin-left: auto;
+      margin-right: auto;
+    }
+
+    .emotion {
+      font-size: 16px;
+      margin: 5px 0;
+    }
+
+    .overall {
+      font-size: 20px;
+      font-weight: bold;
+      margin-top: 10px;
+      color: #2c3e50;
+    }
+  </style>
+</head>
+
+<body>
+
+  <h2>MoodSync Meet — Host Dashboard</h2>
+
+  <div class="videos">
+    <video id="localVideo" autoplay muted playsinline></video>
+    <video id="remoteVideo" autoplay playsinline></video>
+  </div>
+
+  <div class="dashboard">
+    <h3>Live Emotion Stats</h3>
+
+    <div class="emotion">😊 Happy: <span id="happy">0</span></div>
+    <div class="emotion">😐 Neutral: <span id="neutral">0</span></div>
+    <div class="emotion">😢 Sad: <span id="sad">0</span></div>
+    <div class="emotion">😡 Angry: <span id="angry">0</span></div>
+    <div class="emotion">😲 Surprised: <span id="surprised">0</span></div>
+    <div class="emotion">😨 Fearful: <span id="fearful">0</span></div>
+    <div class="emotion">🤢 Disgusted: <span id="disgusted">0</span></div>
+
+    <div class="overall">
+      Overall Mood: <span id="overallMood">—</span>
+    </div>
+  </div>
+
+  <!-- Socket.IO -->
+  <script src="/socket.io/socket.io.js"></script>
+
+  <!-- Face API -->
+  <script src="https://unpkg.com/face-api.js@0.22.2/dist/face-api.min.js"></script>
+
+  <!-- Main Logic -->
+  <script src="main.js"></script>
+
+</body>
+</html>
+
+
+
