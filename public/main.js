@@ -12,46 +12,48 @@ let roomId;
 let isHost = false;
 
 const emotionCounts = {
-  happy: 0,
-  neutral: 0,
-  sad: 0,
-  angry: 0,
-  surprised: 0,
-  fearful: 0,
-  disgusted: 0
+  happy: 0, neutral: 0, sad: 0,
+  angry: 0, surprised: 0, fearful: 0, disgusted: 0
 };
 
 const config = {
   iceServers: [{ urls: "stun:stun.l.google.com:19302" }]
 };
 
+// Models
 Promise.all([
   faceapi.nets.tinyFaceDetector.loadFromUri("/models"),
   faceapi.nets.faceExpressionNet.loadFromUri("/models"),
   faceapi.nets.faceLandmark68Net.loadFromUri("/models")
 ]);
 
-window.onload = () => {
+/* PARTICIPANT FLOW */
+function showJoinInput() {
+  document.getElementById("joinInputArea").style.display = "block";
+}
+
+function joinMeeting() {
+  roomId = document.getElementById("roomInput").value.trim().toUpperCase();
+  if (!roomId) return alert("Enter meeting code");
+  isHost = false;
+  startCall();
+}
+
+/* HOST FLOW */
+function startAsHost() {
+  isHost = true;
   roomId = Math.random().toString(36).substring(2, 8).toUpperCase();
-  document.getElementById("roomInput").value = roomId;
-};
+  document.getElementById("hostCode").value = roomId;
+  document.getElementById("hostCodeArea").style.display = "block";
+  startCall();
+}
 
 function copyCode() {
   navigator.clipboard.writeText(roomId);
   alert("Meeting code copied!");
 }
 
-function startAsHost() {
-  isHost = true;
-  startCall();
-}
-
-function joinMeeting() {
-  roomId = document.getElementById("roomInput").value.trim().toUpperCase();
-  isHost = false;
-  startCall();
-}
-
+/* COMMON */
 function startCall() {
   joinSection.style.display = "none";
   videoSection.style.display = "flex";
@@ -67,6 +69,7 @@ function startCall() {
     });
 }
 
+/* EMOTIONS */
 function startEmotionDetection() {
   setInterval(async () => {
     const det = await faceapi
@@ -76,7 +79,6 @@ function startEmotionDetection() {
     if (det && det.expressions) {
       const emotion = Object.keys(det.expressions)
         .reduce((a, b) => det.expressions[a] > det.expressions[b] ? a : b);
-
       socket.emit("emotion", { roomId, emotion });
     }
   }, 3000);
@@ -90,8 +92,6 @@ socket.on("emotion-update", (emotion) => {
 
 function updateStats() {
   const total = Object.values(emotionCounts).reduce((a, b) => a + b, 0);
-  if (!total) return;
-
   let top = "neutral", max = 0;
 
   for (let e in emotionCounts) {
@@ -99,8 +99,7 @@ function updateStats() {
       max = emotionCounts[e];
       top = e;
     }
-    const percent = ((emotionCounts[e] / total) * 100).toFixed(1);
-    document.getElementById(e).innerText = `${emotionCounts[e]} (${percent}%)`;
+    document.getElementById(e).innerText = emotionCounts[e];
   }
 
   document.getElementById("overallMood").innerText = top;
@@ -108,6 +107,7 @@ function updateStats() {
   emotionChart.update();
 }
 
+/* CHART */
 let emotionChart;
 function initChart() {
   if (!isHost) return;
@@ -117,15 +117,13 @@ function initChart() {
       type: "pie",
       data: {
         labels: Object.keys(emotionCounts),
-        datasets: [{
-          data: Object.values(emotionCounts)
-        }]
+        datasets: [{ data: Object.values(emotionCounts) }]
       }
     }
   );
 }
 
-/* WebRTC */
+/* WEBRTC */
 function createPeerConnection() {
   peerConnection = new RTCPeerConnection(config);
   localStream.getTracks().forEach(t => peerConnection.addTrack(t, localStream));
@@ -151,6 +149,7 @@ socket.on("offer", async offer => {
 
 socket.on("answer", ans => peerConnection.setRemoteDescription(ans));
 socket.on("ice-candidate", c => peerConnection?.addIceCandidate(c));
+
 
 
 
