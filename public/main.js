@@ -8,7 +8,7 @@ const dashboard = document.getElementById("dashboard");
 
 let localStream;
 let peerConnection;
-let roomId = null;
+let roomId;
 let isHost = false;
 
 const emotionCounts = {
@@ -25,36 +25,33 @@ const config = {
   iceServers: [{ urls: "stun:stun.l.google.com:19302" }]
 };
 
-// Load face-api models
 Promise.all([
   faceapi.nets.tinyFaceDetector.loadFromUri("/models"),
   faceapi.nets.faceExpressionNet.loadFromUri("/models"),
   faceapi.nets.faceLandmark68Net.loadFromUri("/models")
 ]);
 
-// Generate meeting code
 window.onload = () => {
   roomId = Math.random().toString(36).substring(2, 8).toUpperCase();
   document.getElementById("roomInput").value = roomId;
 };
 
-// HOST starts meeting
+function copyCode() {
+  navigator.clipboard.writeText(roomId);
+  alert("Meeting code copied!");
+}
+
 function startAsHost() {
   isHost = true;
   startCall();
 }
 
-// Participant joins meeting
 function joinMeeting() {
-  const input = document.getElementById("roomInput").value.trim();
-  if (!input) return alert("Enter meeting code");
-
-  roomId = input.toUpperCase();
+  roomId = document.getElementById("roomInput").value.trim().toUpperCase();
   isHost = false;
   startCall();
 }
 
-// Start call (common)
 function startCall() {
   joinSection.style.display = "none";
   videoSection.style.display = "flex";
@@ -70,7 +67,6 @@ function startCall() {
     });
 }
 
-// Emotion detection
 function startEmotionDetection() {
   setInterval(async () => {
     const det = await faceapi
@@ -86,17 +82,15 @@ function startEmotionDetection() {
   }, 3000);
 }
 
-// Receive emotion updates (host only)
 socket.on("emotion-update", (emotion) => {
   if (!isHost) return;
   emotionCounts[emotion]++;
   updateStats();
 });
 
-// Update stats + percentages + chart
 function updateStats() {
   const total = Object.values(emotionCounts).reduce((a, b) => a + b, 0);
-  if (total === 0) return;
+  if (!total) return;
 
   let top = "neutral", max = 0;
 
@@ -105,10 +99,8 @@ function updateStats() {
       max = emotionCounts[e];
       top = e;
     }
-
     const percent = ((emotionCounts[e] / total) * 100).toFixed(1);
-    document.getElementById(e).innerText =
-      `${emotionCounts[e]} (${percent}%)`;
+    document.getElementById(e).innerText = `${emotionCounts[e]} (${percent}%)`;
   }
 
   document.getElementById("overallMood").innerText = top;
@@ -116,40 +108,30 @@ function updateStats() {
   emotionChart.update();
 }
 
-// Pie chart
 let emotionChart;
 function initChart() {
   if (!isHost) return;
-
-  const ctx = document.getElementById("emotionChart").getContext("2d");
-  emotionChart = new Chart(ctx, {
-    type: "pie",
-    data: {
-      labels: Object.keys(emotionCounts),
-      datasets: [{
-        data: Object.values(emotionCounts)
-      }]
+  emotionChart = new Chart(
+    document.getElementById("emotionChart"),
+    {
+      type: "pie",
+      data: {
+        labels: Object.keys(emotionCounts),
+        datasets: [{
+          data: Object.values(emotionCounts)
+        }]
+      }
     }
-  });
+  );
 }
 
-// WebRTC
+/* WebRTC */
 function createPeerConnection() {
   peerConnection = new RTCPeerConnection(config);
-
-  localStream.getTracks().forEach(t =>
-    peerConnection.addTrack(t, localStream)
-  );
-
-  peerConnection.ontrack = e => {
-    remoteVideo.srcObject = e.streams[0];
-  };
-
-  peerConnection.onicecandidate = e => {
-    if (e.candidate) {
-      socket.emit("ice-candidate", { roomId, candidate: e.candidate });
-    }
-  };
+  localStream.getTracks().forEach(t => peerConnection.addTrack(t, localStream));
+  peerConnection.ontrack = e => remoteVideo.srcObject = e.streams[0];
+  peerConnection.onicecandidate = e =>
+    e.candidate && socket.emit("ice-candidate", { roomId, candidate: e.candidate });
 }
 
 socket.on("ready", async () => {
@@ -159,7 +141,7 @@ socket.on("ready", async () => {
   socket.emit("offer", { roomId, offer });
 });
 
-socket.on("offer", async (offer) => {
+socket.on("offer", async offer => {
   createPeerConnection();
   await peerConnection.setRemoteDescription(offer);
   const answer = await peerConnection.createAnswer();
@@ -169,6 +151,7 @@ socket.on("offer", async (offer) => {
 
 socket.on("answer", ans => peerConnection.setRemoteDescription(ans));
 socket.on("ice-candidate", c => peerConnection?.addIceCandidate(c));
+
 
 
 

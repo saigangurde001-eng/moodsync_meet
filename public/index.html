@@ -2,83 +2,131 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>MoodSync Meet</title>
+  <title>MoodSync</title>
 
   <style>
     body {
-      font-family: Arial, sans-serif;
-      background: #f4f4f4;
+      font-family: "Segoe UI", Arial, sans-serif;
+      background: #eef2f7;
       text-align: center;
+      margin: 0;
+      padding: 0;
     }
 
-    h2 {
+    h1 {
       margin-top: 20px;
+      margin-bottom: 5px;
     }
 
-    #joinSection {
-      margin-top: 20px;
+    .tagline {
+      color: #555;
+      margin-bottom: 20px;
     }
 
-    input {
-      padding: 6px;
+    .card {
+      background: white;
+      padding: 18px;
+      border-radius: 10px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+      margin: 15px auto;
+      width: 70%;
+    }
+
+    #joinSection input {
+      padding: 8px;
       font-size: 16px;
-      width: 200px;
+      width: 220px;
+      text-align: center;
+      letter-spacing: 2px;
     }
 
     button {
-      padding: 6px 12px;
-      font-size: 16px;
-      margin: 5px;
+      padding: 8px 14px;
+      font-size: 15px;
+      margin: 6px;
+      border: none;
+      border-radius: 6px;
       cursor: pointer;
+      background: #2c3e50;
+      color: white;
+      transition: 0.3s;
     }
 
-    video {
-      width: 45%;
-      margin: 10px;
-      border: 2px solid #333;
-      border-radius: 8px;
-      background: black;
+    button:hover {
+      background: #1a252f;
     }
 
     .videos {
       display: none;
       justify-content: center;
       flex-wrap: wrap;
+      gap: 15px;
       margin-top: 20px;
+    }
+
+    video {
+      width: 45%;
+      border-radius: 10px;
+      background: black;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.15);
     }
 
     .dashboard {
       display: none;
-      background: white;
-      padding: 15px;
-      border-radius: 8px;
-      width: 60%;
-      margin: 20px auto;
+      margin-top: 20px;
     }
 
     .emotion {
+      margin: 5px 0;
       font-size: 15px;
-      margin: 4px 0;
+    }
+
+    .happy { color: #f1c40f; }
+    .neutral { color: #3498db; }
+    .sad { color: #5dade2; }
+    .angry { color: #e74c3c; }
+    .surprised { color: #e67e22; }
+    .fearful { color: #9b59b6; }
+    .disgusted { color: #27ae60; }
+
+    #overallMood {
+      font-size: 22px;
+      font-weight: bold;
+      padding: 6px 12px;
+      border-radius: 6px;
+      background: #ecf0f1;
+      display: inline-block;
+      margin-top: 10px;
+    }
+
+    .host-badge {
+      background: #2ecc71;
+      color: white;
+      padding: 4px 8px;
+      border-radius: 6px;
+      font-size: 12px;
+      margin-left: 8px;
     }
 
     canvas {
-      max-width: 300px;
-      margin: 15px auto;
+      max-width: 320px;
+      margin: 20px auto;
     }
   </style>
 </head>
 
 <body>
 
-  <h2>MoodSync Meet</h2>
+  <h1>MoodSync</h1>
+  <div class="tagline">Real-time Emotional Insights for Meetings</div>
 
-  <!-- JOIN / HOST SECTION -->
-  <div id="joinSection">
-    <p><b>Meeting Code</b></p>
-    <input type="text" id="roomInput" placeholder="Meeting Code">
-
+  <!-- JOIN / HOST CARD -->
+  <div class="card" id="joinSection">
+    <h3>Meeting Code</h3>
+    <input type="text" id="roomInput" readonly>
+    <br>
+    <button onclick="copyCode()">Copy Code</button>
     <br><br>
-
     <button onclick="startAsHost()">Start Meeting (Host)</button>
     <button onclick="joinMeeting()">Join as Participant</button>
   </div>
@@ -89,20 +137,25 @@
     <video id="remoteVideo" autoplay playsinline></video>
   </div>
 
-  <!-- HOST DASHBOARD -->
-  <div class="dashboard" id="dashboard">
-    <h3>Host Emotion Dashboard</h3>
+  <!-- DASHBOARD -->
+  <div class="card dashboard" id="dashboard">
+    <h3>
+      Host Emotion Dashboard
+      <span class="host-badge">HOST</span>
+    </h3>
 
-    <div class="emotion">😊 Happy: <span id="happy">0</span></div>
-    <div class="emotion">😐 Neutral: <span id="neutral">0</span></div>
-    <div class="emotion">😢 Sad: <span id="sad">0</span></div>
-    <div class="emotion">😡 Angry: <span id="angry">0</span></div>
-    <div class="emotion">😲 Surprised: <span id="surprised">0</span></div>
-    <div class="emotion">😨 Fearful: <span id="fearful">0</span></div>
-    <div class="emotion">🤢 Disgusted: <span id="disgusted">0</span></div>
+    <div class="emotion happy">😊 Happy: <span id="happy">0</span></div>
+    <div class="emotion neutral">😐 Neutral: <span id="neutral">0</span></div>
+    <div class="emotion sad">😢 Sad: <span id="sad">0</span></div>
+    <div class="emotion angry">😡 Angry: <span id="angry">0</span></div>
+    <div class="emotion surprised">😲 Surprised: <span id="surprised">0</span></div>
+    <div class="emotion fearful">😨 Fearful: <span id="fearful">0</span></div>
+    <div class="emotion disgusted">🤢 Disgusted: <span id="disgusted">0</span></div>
 
-    <p><b>Overall Mood:</b> <span id="overallMood">—</span></p>
+    <p>Overall Mood:</p>
+    <div id="overallMood">—</div>
 
+    <h4>Overall Emotion Distribution</h4>
     <canvas id="emotionChart"></canvas>
   </div>
 
@@ -111,11 +164,10 @@
   <script src="https://unpkg.com/face-api.js@0.22.2/dist/face-api.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
-  <!-- MAIN -->
   <script src="main.js"></script>
-
 </body>
 </html>
+
 
 
 
