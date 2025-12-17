@@ -15,6 +15,23 @@
       margin-top: 20px;
     }
 
+    #joinSection {
+      margin-top: 20px;
+    }
+
+    input {
+      padding: 6px;
+      font-size: 16px;
+      width: 200px;
+    }
+
+    button {
+      padding: 6px 12px;
+      font-size: 16px;
+      margin-left: 5px;
+      cursor: pointer;
+    }
+
     video {
       width: 45%;
       margin: 10px;
@@ -24,46 +41,53 @@
     }
 
     .videos {
-      display: flex;
+      display: none;
       justify-content: center;
       flex-wrap: wrap;
+      margin-top: 20px;
     }
 
     .dashboard {
-      margin-top: 20px;
+      display: none;
       background: white;
       padding: 15px;
       border-radius: 8px;
       width: 60%;
-      margin-left: auto;
-      margin-right: auto;
+      margin: 20px auto;
     }
 
     .emotion {
-      font-size: 16px;
-      margin: 5px 0;
+      font-size: 15px;
+      margin: 4px 0;
     }
 
-    .overall {
-      font-size: 20px;
-      font-weight: bold;
-      margin-top: 10px;
-      color: #2c3e50;
+    canvas {
+      max-width: 300px;
+      margin: 15px auto;
     }
   </style>
 </head>
 
 <body>
 
-  <h2>MoodSync Meet — Host Dashboard</h2>
+  <h2>MoodSync Meet</h2>
 
-  <div class="videos">
+  <!-- JOIN SECTION -->
+  <div id="joinSection">
+    <p><b>Enter Meeting Code</b></p>
+    <input type="text" id="roomInput" placeholder="Meeting Code">
+    <button onclick="joinMeeting()">Join</button>
+  </div>
+
+  <!-- VIDEO -->
+  <div class="videos" id="videoSection">
     <video id="localVideo" autoplay muted playsinline></video>
     <video id="remoteVideo" autoplay playsinline></video>
   </div>
 
-  <div class="dashboard">
-    <h3>Live Emotion Stats</h3>
+  <!-- HOST DASHBOARD -->
+  <div class="dashboard" id="dashboard">
+    <h3>Host Emotion Dashboard</h3>
 
     <div class="emotion">😊 Happy: <span id="happy">0</span></div>
     <div class="emotion">😐 Neutral: <span id="neutral">0</span></div>
@@ -73,22 +97,23 @@
     <div class="emotion">😨 Fearful: <span id="fearful">0</span></div>
     <div class="emotion">🤢 Disgusted: <span id="disgusted">0</span></div>
 
-    <div class="overall">
-      Overall Mood: <span id="overallMood">—</span>
-    </div>
+    <p><b>Overall Mood:</b> <span id="overallMood">—</span></p>
+
+    <canvas id="emotionChart"></canvas>
   </div>
 
-  <!-- Socket.IO -->
+  <!-- LIBRARIES -->
   <script src="/socket.io/socket.io.js"></script>
-
-  <!-- Face API -->
   <script src="https://unpkg.com/face-api.js@0.22.2/dist/face-api.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
-  <!-- Main Logic -->
+  <!-- MAIN -->
   <script src="main.js"></script>
 
 </body>
 </html>
+
+
 
 
 
