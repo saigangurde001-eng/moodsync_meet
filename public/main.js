@@ -5,27 +5,24 @@ const remoteVideo = document.getElementById("remoteVideo");
 const joinSection = document.getElementById("joinSection");
 const videoSection = document.getElementById("videoSection");
 const dashboard = document.getElementById("dashboard");
+const selfControls = document.getElementById("selfControls");
 
 let localStream;
 let peerConnection;
 let roomId;
 let isHost = false;
+let micMuted = false;
 
 const emotionCounts = {
-  happy: 0,
-  neutral: 0,
-  sad: 0,
-  angry: 0,
-  surprised: 0,
-  fearful: 0,
-  disgusted: 0
+  happy: 0, neutral: 0, sad: 0,
+  angry: 0, surprised: 0, fearful: 0, disgusted: 0
 };
 
 const config = {
   iceServers: [{ urls: "stun:stun.l.google.com:19302" }]
 };
 
-// Load models
+// Models
 Promise.all([
   faceapi.nets.tinyFaceDetector.loadFromUri("/models"),
   faceapi.nets.faceExpressionNet.loadFromUri("/models"),
@@ -48,10 +45,8 @@ function joinMeeting() {
 function startAsHost() {
   isHost = true;
   roomId = Math.random().toString(36).substring(2, 8).toUpperCase();
-
   document.getElementById("hostCode").value = roomId;
   document.getElementById("hostCodeArea").style.display = "block";
-
   startCall();
 }
 
@@ -64,7 +59,9 @@ function copyCode() {
 function startCall() {
   joinSection.style.display = "none";
   videoSection.style.display = "flex";
+
   if (isHost) dashboard.style.display = "block";
+  else selfControls.style.display = "block";
 
   navigator.mediaDevices.getUserMedia({ video: true, audio: true })
     .then(stream => {
@@ -76,7 +73,38 @@ function startCall() {
     });
 }
 
-/* EMOTION DETECTION */
+/* ================= AUDIO CONTROLS ================= */
+
+// Participant self mute/unmute
+function toggleSelfMute() {
+  const audioTrack = localStream.getAudioTracks()[0];
+  audioTrack.enabled = !audioTrack.enabled;
+  micMuted = !audioTrack.enabled;
+}
+
+// Host: mute all
+function muteAll() {
+  socket.emit("mute-all", roomId);
+}
+
+// Host: unmute all
+function unmuteAll() {
+  socket.emit("unmute-all", roomId);
+}
+
+// Participants listen
+socket.on("mute-all", () => {
+  if (isHost) return;
+  localStream.getAudioTracks()[0].enabled = false;
+});
+
+socket.on("unmute-all", () => {
+  if (isHost) return;
+  localStream.getAudioTracks()[0].enabled = true;
+});
+
+/* ================= EMOTIONS ================= */
+
 function startEmotionDetection() {
   setInterval(async () => {
     const det = await faceapi
@@ -99,11 +127,7 @@ socket.on("emotion-update", (emotion) => {
 });
 
 function updateStats() {
-  const total = Object.values(emotionCounts).reduce((a, b) => a + b, 0);
-  if (!total) return;
-
   let top = "neutral", max = 0;
-
   for (let e in emotionCounts) {
     if (emotionCounts[e] > max) {
       max = emotionCounts[e];
@@ -111,17 +135,16 @@ function updateStats() {
     }
     document.getElementById(e).innerText = emotionCounts[e];
   }
-
   document.getElementById("overallMood").innerText = top;
   emotionChart.data.datasets[0].data = Object.values(emotionCounts);
   emotionChart.update();
 }
 
-/* PIE CHART */
+/* ================= CHART ================= */
+
 let emotionChart;
 function initChart() {
   if (!isHost) return;
-
   emotionChart = new Chart(
     document.getElementById("emotionChart"),
     {
@@ -134,7 +157,8 @@ function initChart() {
   );
 }
 
-/* WEBRTC */
+/* ================= WEBRTC ================= */
+
 function createPeerConnection() {
   peerConnection = new RTCPeerConnection(config);
   localStream.getTracks().forEach(t => peerConnection.addTrack(t, localStream));
@@ -160,6 +184,7 @@ socket.on("offer", async offer => {
 
 socket.on("answer", ans => peerConnection.setRemoteDescription(ans));
 socket.on("ice-candidate", c => peerConnection?.addIceCandidate(c));
+
 
 
 
