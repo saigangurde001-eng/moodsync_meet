@@ -23,17 +23,19 @@ const config = {
   iceServers: [{ urls: "stun:stun.l.google.com:19302" }]
 };
 
-/* MODELS */
+/* ================= MODELS ================= */
 Promise.all([
   faceapi.nets.tinyFaceDetector.loadFromUri("/models"),
   faceapi.nets.faceExpressionNet.loadFromUri("/models"),
   faceapi.nets.faceLandmark68Net.loadFromUri("/models")
 ]);
 
-/* UI */
+/* ================= UI ================= */
 function updateMicUI() {
   const btn = document.getElementById("selfMuteBtn");
   const status = document.getElementById("micStatus");
+
+  if (!btn || !status) return;
 
   if (isMuted) {
     btn.innerText = "Unmute Mic 🎤";
@@ -46,7 +48,7 @@ function updateMicUI() {
   }
 }
 
-/* JOIN */
+/* ================= JOIN FLOW ================= */
 function showJoinInput() {
   document.getElementById("joinInputArea").style.display = "block";
 }
@@ -58,7 +60,7 @@ function joinMeeting() {
   startCall();
 }
 
-/* HOST */
+/* ================= HOST FLOW ================= */
 function startAsHost() {
   isHost = true;
   roomId = Math.random().toString(36).substring(2, 8).toUpperCase();
@@ -72,7 +74,7 @@ function copyCode() {
   alert("Meeting code copied!");
 }
 
-/* START */
+/* ================= START CALL (MOBILE SAFE) ================= */
 function startCall() {
   joinSection.style.display = "none";
   videoSection.style.display = "flex";
@@ -81,21 +83,38 @@ function startCall() {
   else selfControls.style.display = "block";
 
   navigator.mediaDevices.getUserMedia({
-    video: { width: 640, height: 480 },
+    video: {
+      width: { ideal: 640 },
+      height: { ideal: 480 },
+      facingMode: "user"
+    },
     audio: true
-  }).then(stream => {
+  })
+  .then(stream => {
     localStream = stream;
+
+    // iOS + mobile fix
+    localVideo.setAttribute("playsinline", true);
+    remoteVideo.setAttribute("playsinline", true);
+
     localVideo.srcObject = stream;
+
     isMuted = false;
     updateMicUI();
+
     socket.emit("join-room", roomId);
     startEmotionDetection();
     setTimeout(initChart, 400);
+  })
+  .catch(err => {
+    alert("Camera/Microphone permission denied or not supported on this device.");
+    console.error("getUserMedia error:", err);
   });
 }
 
-/* AUDIO */
+/* ================= AUDIO ================= */
 function toggleSelfMute() {
+  if (!localStream) return;
   const track = localStream.getAudioTracks()[0];
   track.enabled = !track.enabled;
   isMuted = !track.enabled;
@@ -103,20 +122,20 @@ function toggleSelfMute() {
 }
 
 socket.on("mute-all", () => {
-  if (isHost) return;
+  if (isHost || !localStream) return;
   localStream.getAudioTracks()[0].enabled = false;
   isMuted = true;
   updateMicUI();
 });
 
 socket.on("unmute-all", () => {
-  if (isHost) return;
+  if (isHost || !localStream) return;
   localStream.getAudioTracks()[0].enabled = true;
   isMuted = false;
   updateMicUI();
 });
 
-/* EMOTIONS */
+/* ================= EMOTIONS ================= */
 function startEmotionDetection() {
   setInterval(async () => {
     const det = await faceapi
@@ -126,9 +145,10 @@ function startEmotionDetection() {
     if (det && det.expressions) {
       const emotion = Object.keys(det.expressions)
         .reduce((a, b) => det.expressions[a] > det.expressions[b] ? a : b);
+
       socket.emit("emotion", { roomId, emotion });
     }
-  }, 7000);
+  }, 7000); // optimized
 }
 
 socket.on("emotion-update", emotion => {
@@ -139,6 +159,7 @@ socket.on("emotion-update", emotion => {
 
 function updateStats() {
   let top = "neutral", max = 0;
+
   for (let e in emotionCounts) {
     if (emotionCounts[e] > max) {
       max = emotionCounts[e];
@@ -146,16 +167,19 @@ function updateStats() {
     }
     document.getElementById(e).innerText = emotionCounts[e];
   }
+
   document.getElementById("overallMood").innerText = top;
+
   if (emotionChart) {
     emotionChart.data.datasets[0].data = Object.values(emotionCounts);
     emotionChart.update();
   }
 }
 
-/* CHART */
+/* ================= CHART ================= */
 function initChart() {
   if (!isHost || emotionChart) return;
+
   const ctx = document.getElementById("emotionChart").getContext("2d");
   emotionChart = new Chart(ctx, {
     type: "pie",
@@ -170,7 +194,7 @@ function initChart() {
   });
 }
 
-/* WEBRTC */
+/* ================= WEBRTC ================= */
 function createPeerConnection() {
   peerConnection = new RTCPeerConnection(config);
   localStream.getTracks().forEach(t => peerConnection.addTrack(t, localStream));
@@ -196,6 +220,7 @@ socket.on("offer", async offer => {
 
 socket.on("answer", ans => peerConnection.setRemoteDescription(ans));
 socket.on("ice-candidate", c => peerConnection?.addIceCandidate(c));
+
 
 
 
