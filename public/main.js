@@ -12,6 +12,7 @@ let peerConnection;
 let roomId;
 let isHost = false;
 let isMuted = false;
+let emotionChart;
 
 const emotionCounts = {
   happy: 0, neutral: 0, sad: 0,
@@ -22,19 +23,17 @@ const config = {
   iceServers: [{ urls: "stun:stun.l.google.com:19302" }]
 };
 
-/* ================= MODELS ================= */
+/* MODELS */
 Promise.all([
   faceapi.nets.tinyFaceDetector.loadFromUri("/models"),
   faceapi.nets.faceExpressionNet.loadFromUri("/models"),
   faceapi.nets.faceLandmark68Net.loadFromUri("/models")
 ]);
 
-/* ================= UI HELPERS ================= */
+/* UI HELPERS */
 function updateMicUI() {
   const btn = document.getElementById("selfMuteBtn");
   const status = document.getElementById("micStatus");
-
-  if (!btn || !status) return;
 
   if (isMuted) {
     btn.innerText = "Unmute Mic 🎤";
@@ -47,7 +46,7 @@ function updateMicUI() {
   }
 }
 
-/* ================= PARTICIPANT FLOW ================= */
+/* JOIN FLOW */
 function showJoinInput() {
   document.getElementById("joinInputArea").style.display = "block";
 }
@@ -59,7 +58,7 @@ function joinMeeting() {
   startCall();
 }
 
-/* ================= HOST FLOW ================= */
+/* HOST FLOW */
 function startAsHost() {
   isHost = true;
   roomId = Math.random().toString(36).substring(2, 8).toUpperCase();
@@ -73,7 +72,7 @@ function copyCode() {
   alert("Meeting code copied!");
 }
 
-/* ================= START CALL ================= */
+/* START CALL */
 function startCall() {
   joinSection.style.display = "none";
   videoSection.style.display = "flex";
@@ -86,61 +85,41 @@ function startCall() {
       localStream = stream;
       localVideo.srcObject = stream;
 
-      // default mic ON
       isMuted = false;
       updateMicUI();
 
       socket.emit("join-room", roomId);
       startEmotionDetection();
-      setTimeout(initChart, 300);
+
+      // IMPORTANT: delayed init
+      setTimeout(initChart, 400);
     });
 }
 
-/* ================= AUDIO CONTROLS ================= */
-
-// SELF mute/unmute
+/* AUDIO */
 function toggleSelfMute() {
   if (!localStream) return;
-
-  const audioTrack = localStream.getAudioTracks()[0];
-  if (!audioTrack) return;
-
-  audioTrack.enabled = !audioTrack.enabled;
-  isMuted = !audioTrack.enabled;
-
+  const track = localStream.getAudioTracks()[0];
+  track.enabled = !track.enabled;
+  isMuted = !track.enabled;
   updateMicUI();
 }
 
-// HOST mute all
-function muteAll() {
-  socket.emit("mute-all", roomId);
-}
-
-// HOST unmute all
-function unmuteAll() {
-  socket.emit("unmute-all", roomId);
-}
-
-// PARTICIPANT listens
 socket.on("mute-all", () => {
   if (isHost || !localStream) return;
-
-  const audioTrack = localStream.getAudioTracks()[0];
-  audioTrack.enabled = false;
+  localStream.getAudioTracks()[0].enabled = false;
   isMuted = true;
   updateMicUI();
 });
 
 socket.on("unmute-all", () => {
   if (isHost || !localStream) return;
-
-  const audioTrack = localStream.getAudioTracks()[0];
-  audioTrack.enabled = true;
+  localStream.getAudioTracks()[0].enabled = true;
   isMuted = false;
   updateMicUI();
 });
 
-/* ================= EMOTIONS ================= */
+/* EMOTIONS */
 function startEmotionDetection() {
   setInterval(async () => {
     const det = await faceapi
@@ -164,6 +143,7 @@ socket.on("emotion-update", (emotion) => {
 
 function updateStats() {
   let top = "neutral", max = 0;
+
   for (let e in emotionCounts) {
     if (emotionCounts[e] > max) {
       max = emotionCounts[e];
@@ -171,29 +151,38 @@ function updateStats() {
     }
     document.getElementById(e).innerText = emotionCounts[e];
   }
+
   document.getElementById("overallMood").innerText = top;
-  emotionChart.data.datasets[0].data = Object.values(emotionCounts);
-  emotionChart.update();
+
+  if (emotionChart) {
+    emotionChart.data.datasets[0].data = Object.values(emotionCounts);
+    emotionChart.update();
+  }
 }
 
-/* ================= CHART ================= */
-let emotionChart;
+/* PIE CHART – FINAL FIX */
 function initChart() {
-  if (!isHost) return;
+  if (!isHost || emotionChart) return;
 
-  emotionChart = new Chart(
-    document.getElementById("emotionChart"),
-    {
-      type: "pie",
-      data: {
-        labels: Object.keys(emotionCounts),
-        datasets: [{ data: Object.values(emotionCounts) }]
-      }
+  const canvas = document.getElementById("emotionChart");
+  if (!canvas) return;
+
+  emotionChart = new Chart(canvas.getContext("2d"), {
+    type: "pie",
+    data: {
+      labels: Object.keys(emotionCounts),
+      datasets: [{
+        data: Object.values(emotionCounts)
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false
     }
-  );
+  });
 }
 
-/* ================= WEBRTC ================= */
+/* WEBRTC */
 function createPeerConnection() {
   peerConnection = new RTCPeerConnection(config);
   localStream.getTracks().forEach(t => peerConnection.addTrack(t, localStream));
@@ -219,6 +208,7 @@ socket.on("offer", async offer => {
 
 socket.on("answer", ans => peerConnection.setRemoteDescription(ans));
 socket.on("ice-candidate", c => peerConnection?.addIceCandidate(c));
+
 
 
 

@@ -22,6 +22,14 @@
       width: 70%;
     }
 
+    input {
+      padding: 8px;
+      font-size: 16px;
+      width: 220px;
+      text-align: center;
+      letter-spacing: 2px;
+    }
+
     button {
       padding: 8px 14px;
       margin: 6px;
@@ -48,12 +56,13 @@
 
     .dashboard { display: none; }
 
-    .control-btn {
-      background: #34495e;
+    canvas {
+      margin-top: 15px;
     }
 
-    .participant-controls {
-      margin-top: 10px;
+    .status {
+      font-weight: bold;
+      margin-top: 5px;
     }
   </style>
 </head>
@@ -90,30 +99,28 @@
   <video id="remoteVideo" autoplay playsinline></video>
 </div>
 
-<!-- PARTICIPANT SELF CONTROLS -->
-<div class="card participant-controls" id="selfControls" style="display:none;">
-<button id="selfMuteBtn" onclick="toggleSelfMute()">Mute Mic 🔇</button>
-<p id="micStatus">🎤 Mic is ON</p>
-
+<!-- PARTICIPANT CONTROLS -->
+<div class="card" id="selfControls" style="display:none;">
+  <button id="selfMuteBtn" onclick="toggleSelfMute()">Mute Mic 🔇</button>
+  <p id="micStatus" class="status">🎤 Mic is ON</p>
 </div>
 
-<!-- HOST DASHBOARD -->
+<!-- DASHBOARD -->
 <div class="card dashboard" id="dashboard">
-  <h3>Host Controls</h3>
+  <h3>Host Emotion Dashboard</h3>
 
-  <button class="control-btn" onclick="muteAll()">Mute All</button>
-  <button class="control-btn" onclick="unmuteAll()">Unmute All</button>
-
-  <hr>
-
-  <h3>Emotion Dashboard</h3>
   <p>😊 Happy: <span id="happy">0</span></p>
   <p>😐 Neutral: <span id="neutral">0</span></p>
   <p>😢 Sad: <span id="sad">0</span></p>
   <p>😡 Angry: <span id="angry">0</span></p>
+  <p>😲 Surprised: <span id="surprised">0</span></p>
+  <p>😨 Fearful: <span id="fearful">0</span></p>
+  <p>🤢 Disgusted: <span id="disgusted">0</span></p>
+
   <p><b>Overall Mood:</b> <span id="overallMood">—</span></p>
 
-  <canvas id="emotionChart"></canvas>
+  <!-- IMPORTANT: HEIGHT FIX -->
+  <canvas id="emotionChart" height="300"></canvas>
 </div>
 
 <script src="/socket.io/socket.io.js"></script>
@@ -123,6 +130,7 @@
 
 </body>
 </html>
+
 
 
 
