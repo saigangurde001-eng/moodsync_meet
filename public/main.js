@@ -12,15 +12,20 @@ let roomId;
 let isHost = false;
 
 const emotionCounts = {
-  happy: 0, neutral: 0, sad: 0,
-  angry: 0, surprised: 0, fearful: 0, disgusted: 0
+  happy: 0,
+  neutral: 0,
+  sad: 0,
+  angry: 0,
+  surprised: 0,
+  fearful: 0,
+  disgusted: 0
 };
 
 const config = {
   iceServers: [{ urls: "stun:stun.l.google.com:19302" }]
 };
 
-// Models
+// Load models
 Promise.all([
   faceapi.nets.tinyFaceDetector.loadFromUri("/models"),
   faceapi.nets.faceExpressionNet.loadFromUri("/models"),
@@ -43,8 +48,10 @@ function joinMeeting() {
 function startAsHost() {
   isHost = true;
   roomId = Math.random().toString(36).substring(2, 8).toUpperCase();
+
   document.getElementById("hostCode").value = roomId;
   document.getElementById("hostCodeArea").style.display = "block";
+
   startCall();
 }
 
@@ -69,7 +76,7 @@ function startCall() {
     });
 }
 
-/* EMOTIONS */
+/* EMOTION DETECTION */
 function startEmotionDetection() {
   setInterval(async () => {
     const det = await faceapi
@@ -79,6 +86,7 @@ function startEmotionDetection() {
     if (det && det.expressions) {
       const emotion = Object.keys(det.expressions)
         .reduce((a, b) => det.expressions[a] > det.expressions[b] ? a : b);
+
       socket.emit("emotion", { roomId, emotion });
     }
   }, 3000);
@@ -92,6 +100,8 @@ socket.on("emotion-update", (emotion) => {
 
 function updateStats() {
   const total = Object.values(emotionCounts).reduce((a, b) => a + b, 0);
+  if (!total) return;
+
   let top = "neutral", max = 0;
 
   for (let e in emotionCounts) {
@@ -107,10 +117,11 @@ function updateStats() {
   emotionChart.update();
 }
 
-/* CHART */
+/* PIE CHART */
 let emotionChart;
 function initChart() {
   if (!isHost) return;
+
   emotionChart = new Chart(
     document.getElementById("emotionChart"),
     {
@@ -149,6 +160,7 @@ socket.on("offer", async offer => {
 
 socket.on("answer", ans => peerConnection.setRemoteDescription(ans));
 socket.on("ice-candidate", c => peerConnection?.addIceCandidate(c));
+
 
 
 

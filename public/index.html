@@ -11,7 +11,9 @@
       text-align: center;
     }
 
-    h1 { margin-top: 20px; }
+    h1 {
+      margin-top: 20px;
+    }
 
     .card {
       background: white;
@@ -41,7 +43,9 @@
       color: white;
     }
 
-    button:hover { background: #1a252f; }
+    button:hover {
+      background: #1a252f;
+    }
 
     .videos {
       display: none;
@@ -73,15 +77,13 @@
 
 <h1>MoodSync</h1>
 
+<!-- JOIN / START -->
 <div class="card" id="joinSection">
   <h3>Start or Join Meeting</h3>
 
-  <!-- HOST -->
   <button onclick="startAsHost()">Start Meeting (Host)</button>
+  <br><br>
 
-  <hr><br>
-
-  <!-- PARTICIPANT -->
   <button onclick="showJoinInput()">Join as Participant</button>
 
   <div id="joinInputArea" style="display:none;">
@@ -90,20 +92,23 @@
     <br><br>
     <button onclick="joinMeeting()">Join Meeting</button>
   </div>
-
-  <div id="hostCodeArea" style="display:none;">
-    <p><b>Meeting Code</b></p>
-    <input type="text" id="hostCode" readonly>
-    <br><br>
-    <button onclick="copyCode()">Copy Code</button>
-  </div>
 </div>
 
+<!-- HOST CODE (SEPARATE CARD) -->
+<div class="card" id="hostCodeArea" style="display:none;">
+  <h3>Meeting Code</h3>
+  <input type="text" id="hostCode" readonly>
+  <br><br>
+  <button onclick="copyCode()">Copy Code</button>
+</div>
+
+<!-- VIDEO -->
 <div class="videos" id="videoSection">
-  <video id="localVideo" autoplay muted></video>
-  <video id="remoteVideo" autoplay></video>
+  <video id="localVideo" autoplay muted playsinline></video>
+  <video id="remoteVideo" autoplay playsinline></video>
 </div>
 
+<!-- DASHBOARD -->
 <div class="card dashboard" id="dashboard">
   <h3>Host Emotion Dashboard <span class="host-badge">HOST</span></h3>
 
@@ -126,6 +131,7 @@
 
 </body>
 </html>
+
 
 
 
