@@ -30,7 +30,7 @@ Promise.all([
   faceapi.nets.faceLandmark68Net.loadFromUri("/models")
 ]);
 
-/* UI HELPERS */
+/* UI */
 function updateMicUI() {
   const btn = document.getElementById("selfMuteBtn");
   const status = document.getElementById("micStatus");
@@ -46,7 +46,7 @@ function updateMicUI() {
   }
 }
 
-/* JOIN FLOW */
+/* JOIN */
 function showJoinInput() {
   document.getElementById("joinInputArea").style.display = "block";
 }
@@ -58,7 +58,7 @@ function joinMeeting() {
   startCall();
 }
 
-/* HOST FLOW */
+/* HOST */
 function startAsHost() {
   isHost = true;
   roomId = Math.random().toString(36).substring(2, 8).toUpperCase();
@@ -72,7 +72,7 @@ function copyCode() {
   alert("Meeting code copied!");
 }
 
-/* START CALL */
+/* START */
 function startCall() {
   joinSection.style.display = "none";
   videoSection.style.display = "flex";
@@ -80,25 +80,22 @@ function startCall() {
   if (isHost) dashboard.style.display = "block";
   else selfControls.style.display = "block";
 
-  navigator.mediaDevices.getUserMedia({ video: true, audio: true })
-    .then(stream => {
-      localStream = stream;
-      localVideo.srcObject = stream;
-
-      isMuted = false;
-      updateMicUI();
-
-      socket.emit("join-room", roomId);
-      startEmotionDetection();
-
-      // IMPORTANT: delayed init
-      setTimeout(initChart, 400);
-    });
+  navigator.mediaDevices.getUserMedia({
+    video: { width: 640, height: 480 },
+    audio: true
+  }).then(stream => {
+    localStream = stream;
+    localVideo.srcObject = stream;
+    isMuted = false;
+    updateMicUI();
+    socket.emit("join-room", roomId);
+    startEmotionDetection();
+    setTimeout(initChart, 400);
+  });
 }
 
 /* AUDIO */
 function toggleSelfMute() {
-  if (!localStream) return;
   const track = localStream.getAudioTracks()[0];
   track.enabled = !track.enabled;
   isMuted = !track.enabled;
@@ -106,14 +103,14 @@ function toggleSelfMute() {
 }
 
 socket.on("mute-all", () => {
-  if (isHost || !localStream) return;
+  if (isHost) return;
   localStream.getAudioTracks()[0].enabled = false;
   isMuted = true;
   updateMicUI();
 });
 
 socket.on("unmute-all", () => {
-  if (isHost || !localStream) return;
+  if (isHost) return;
   localStream.getAudioTracks()[0].enabled = true;
   isMuted = false;
   updateMicUI();
@@ -129,13 +126,12 @@ function startEmotionDetection() {
     if (det && det.expressions) {
       const emotion = Object.keys(det.expressions)
         .reduce((a, b) => det.expressions[a] > det.expressions[b] ? a : b);
-
       socket.emit("emotion", { roomId, emotion });
     }
-  }, 3000);
+  }, 7000);
 }
 
-socket.on("emotion-update", (emotion) => {
+socket.on("emotion-update", emotion => {
   if (!isHost) return;
   emotionCounts[emotion]++;
   updateStats();
@@ -143,7 +139,6 @@ socket.on("emotion-update", (emotion) => {
 
 function updateStats() {
   let top = "neutral", max = 0;
-
   for (let e in emotionCounts) {
     if (emotionCounts[e] > max) {
       max = emotionCounts[e];
@@ -151,29 +146,22 @@ function updateStats() {
     }
     document.getElementById(e).innerText = emotionCounts[e];
   }
-
   document.getElementById("overallMood").innerText = top;
-
   if (emotionChart) {
     emotionChart.data.datasets[0].data = Object.values(emotionCounts);
     emotionChart.update();
   }
 }
 
-/* PIE CHART – FINAL FIX */
+/* CHART */
 function initChart() {
   if (!isHost || emotionChart) return;
-
-  const canvas = document.getElementById("emotionChart");
-  if (!canvas) return;
-
-  emotionChart = new Chart(canvas.getContext("2d"), {
+  const ctx = document.getElementById("emotionChart").getContext("2d");
+  emotionChart = new Chart(ctx, {
     type: "pie",
     data: {
       labels: Object.keys(emotionCounts),
-      datasets: [{
-        data: Object.values(emotionCounts)
-      }]
+      datasets: [{ data: Object.values(emotionCounts) }]
     },
     options: {
       responsive: true,
@@ -208,6 +196,7 @@ socket.on("offer", async offer => {
 
 socket.on("answer", ans => peerConnection.setRemoteDescription(ans));
 socket.on("ice-candidate", c => peerConnection?.addIceCandidate(c));
+
 
 
 

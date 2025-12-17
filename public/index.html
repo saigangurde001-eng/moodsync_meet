@@ -9,16 +9,17 @@
       font-family: "Segoe UI", Arial, sans-serif;
       background: #eef2f7;
       text-align: center;
+      margin: 0;
     }
 
-    h1 { margin-top: 20px; }
+    h1 { margin-top: 15px; }
 
     .card {
       background: white;
-      padding: 18px;
+      padding: 16px;
       border-radius: 10px;
       box-shadow: 0 4px 12px rgba(0,0,0,0.1);
-      margin: 20px auto;
+      margin: 15px auto;
       width: 70%;
     }
 
@@ -27,7 +28,6 @@
       font-size: 16px;
       width: 220px;
       text-align: center;
-      letter-spacing: 2px;
     }
 
     button {
@@ -45,7 +45,7 @@
     .videos {
       display: none;
       justify-content: center;
-      gap: 15px;
+      gap: 12px;
     }
 
     video {
@@ -54,15 +54,21 @@
       background: black;
     }
 
-    .dashboard { display: none; }
+    /* 🔒 DASHBOARD FIX */
+    .dashboard {
+      display: none;
+      max-height: 520px;
+      overflow-y: auto;
+    }
 
-    canvas {
-      margin-top: 15px;
+    .chart-container {
+      height: 300px;
+      position: relative;
     }
 
     .status {
       font-weight: bold;
-      margin-top: 5px;
+      margin-top: 6px;
     }
   </style>
 </head>
@@ -105,7 +111,7 @@
   <p id="micStatus" class="status">🎤 Mic is ON</p>
 </div>
 
-<!-- DASHBOARD -->
+<!-- HOST DASHBOARD -->
 <div class="card dashboard" id="dashboard">
   <h3>Host Emotion Dashboard</h3>
 
@@ -119,8 +125,10 @@
 
   <p><b>Overall Mood:</b> <span id="overallMood">—</span></p>
 
-  <!-- IMPORTANT: HEIGHT FIX -->
-  <canvas id="emotionChart" height="300"></canvas>
+  <!-- FIXED CHART CONTAINER -->
+  <div class="chart-container">
+    <canvas id="emotionChart"></canvas>
+  </div>
 </div>
 
 <script src="/socket.io/socket.io.js"></script>
@@ -130,6 +138,7 @@
 
 </body>
 </html>
+
 
 
 
