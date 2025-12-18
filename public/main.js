@@ -18,35 +18,27 @@ const joinBtn = document.getElementById("joinBtn");
 const startBtn = document.getElementById("startBtn");
 const nameInput = document.getElementById("nameInput");
 
-/* UI */
 hostBtn.onclick = () => {
   userName = nameInput.value.trim();
-  if (!userName) return alert("Enter name");
-
   isHost = true;
   roomId = Math.random().toString(36).substring(2, 8).toUpperCase();
-  alert("Meeting Code: " + roomId);
+  alert(roomId);
   showMedia();
 };
 
 joinBtn.onclick = () => {
   userName = nameInput.value.trim();
-  if (!userName) return alert("Enter name");
-
   roomId = document.getElementById("roomInput").value.trim().toUpperCase();
-  if (!roomId) return alert("Enter meeting code");
-
   showMedia();
 };
 
 startBtn.onclick = startMedia;
 
 function showMedia() {
-  document.getElementById("joinSection").style.display = "none";
-  document.getElementById("mediaSection").style.display = "block";
+  joinSection.style.display = "none";
+  mediaSection.style.display = "block";
 }
 
-/* Media */
 function startMedia() {
   navigator.mediaDevices.getUserMedia({ video: true, audio: true })
     .then(stream => {
@@ -58,8 +50,8 @@ function startMedia() {
         hostVideo.play();
       }
 
-      document.getElementById("mediaSection").style.display = "none";
-      document.getElementById("videoSection").style.display = "flex";
+      mediaSection.style.display = "none";
+      videoSection.style.display = "block";
 
       socket.emit("join-room", { roomId, name: userName, isHost });
       createPeer();
@@ -69,15 +61,10 @@ function startMedia() {
         initChart();
       }
 
-      if (!/Mobi|Android/i.test(navigator.userAgent)) {
-        detectSpeaking();
-      }
-
       startEmotionDetection();
     });
 }
 
-/* WebRTC */
 function createPeer() {
   peer = new RTCPeerConnection({
     iceServers: [{ urls: "stun:stun.l.google.com:19302" }]
@@ -87,17 +74,8 @@ function createPeer() {
 
   peer.ontrack = e => {
     const stream = e.streams[0];
-
-    // Everyone sees host
-    if (!isHost) {
-      hostVideo.srcObject = stream;
-      hostVideo.play();
-    }
-
-    // Everyone sees active speaker
     speakerVideo.srcObject = stream;
     speakerVideo.play();
-
     remoteAudio.srcObject = stream;
     remoteAudio.play();
   };
@@ -109,7 +87,7 @@ function createPeer() {
   };
 }
 
-/* Signaling */
+/* SIGNALING */
 socket.on("ready", async () => {
   const offer = await peer.createOffer();
   await peer.setLocalDescription(offer);
@@ -126,41 +104,33 @@ socket.on("offer", async offer => {
 socket.on("answer", ans => peer.setRemoteDescription(ans));
 socket.on("ice-candidate", c => peer.addIceCandidate(c));
 
-/* Active speaker detection (PC only) */
-function detectSpeaking() {
-  const ctx = new AudioContext();
-  const src = ctx.createMediaStreamSource(localStream);
-  const analyser = ctx.createAnalyser();
-  src.connect(analyser);
-  analyser.fftSize = 256;
-
-  const data = new Uint8Array(analyser.frequencyBinCount);
-
-  setInterval(() => {
-    analyser.getByteFrequencyData(data);
-    const avg = data.reduce((a, b) => a + b, 0) / data.length;
-    if (avg > 25) socket.emit("speaking", { roomId });
-    else socket.emit("silent", { roomId });
-  }, 800);
-}
-
-/* Emotion detection */
+/* ✅ FIXED EMOTION DETECTION */
 function startEmotionDetection() {
+  const localEmotionVideo = document.createElement("video");
+  localEmotionVideo.srcObject = localStream;
+  localEmotionVideo.muted = true;
+  localEmotionVideo.play();
+
   setInterval(async () => {
     const det = await faceapi
-      .detectSingleFace(hostVideo, new faceapi.TinyFaceDetectorOptions())
+      .detectSingleFace(
+        localEmotionVideo,
+        new faceapi.TinyFaceDetectorOptions()
+      )
       .withFaceExpressions();
 
     if (det) {
       const emotion = Object.keys(det.expressions)
-        .reduce((a, b) => det.expressions[a] > det.expressions[b] ? a : b);
+        .reduce((a, b) =>
+          det.expressions[a] > det.expressions[b] ? a : b
+        );
 
       socket.emit("emotion", { roomId, emotion });
     }
   }, 6000);
 }
 
-/* Dashboard */
+/* DASHBOARD */
 socket.on("emotion-update", emotion => {
   if (!isHost) return;
   emotions[emotion]++;
@@ -184,6 +154,7 @@ function updateDashboard() {
   chart.data.datasets[0].data = Object.values(emotions);
   chart.update();
 }
+
 
 
 
