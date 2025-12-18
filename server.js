@@ -8,20 +8,36 @@ const io = new Server(server);
 
 app.use(express.static("public"));
 
-io.on("connection", (socket) => {
+const roomParticipants = {};
+
+io.on("connection", socket => {
   console.log("User connected:", socket.id);
 
-  socket.on("join-room", (roomId) => {
+  socket.on("join-room", ({ roomId, name, isHost }) => {
     socket.join(roomId);
 
+    if (!roomParticipants[roomId]) {
+      roomParticipants[roomId] = {};
+    }
+
+    roomParticipants[roomId][socket.id] = {
+      name,
+      isHost
+    };
+
+    io.to(roomId).emit(
+      "participants-update",
+      Object.values(roomParticipants[roomId])
+    );
+
     const clients = io.sockets.adapter.rooms.get(roomId);
-    const numClients = clients ? clients.size : 0;
-
-    console.log(`Room ${roomId} users: ${numClients}`);
-
-    if (numClients > 1) {
+    if (clients && clients.size > 1) {
       socket.to(roomId).emit("ready");
     }
+  });
+
+  socket.on("emotion", ({ roomId, emotion }) => {
+    socket.to(roomId).emit("emotion-update", emotion);
   });
 
   socket.on("offer", ({ roomId, offer }) => {
@@ -36,21 +52,30 @@ io.on("connection", (socket) => {
     socket.to(roomId).emit("ice-candidate", candidate);
   });
 
-  // 🎭 Emotion handling
-  socket.on("emotion", ({ roomId, emotion }) => {
-    console.log("Emotion received:", emotion);
-    socket.to(roomId).emit("emotion-update", emotion);
-  });
-
   socket.on("disconnect", () => {
+    for (const roomId in roomParticipants) {
+      if (roomParticipants[roomId][socket.id]) {
+        delete roomParticipants[roomId][socket.id];
+
+        io.to(roomId).emit(
+          "participants-update",
+          Object.values(roomParticipants[roomId])
+        );
+
+        if (Object.keys(roomParticipants[roomId]).length === 0) {
+          delete roomParticipants[roomId];
+        }
+      }
+    }
+
     console.log("User disconnected:", socket.id);
   });
 });
 
 const PORT = process.env.PORT || 3000;
+server.listen(PORT, () =>
+  console.log("Server running on port", PORT)
+);
 
-server.listen(PORT, () => {
-  console.log("Server running on port", PORT);
-});
 
 
