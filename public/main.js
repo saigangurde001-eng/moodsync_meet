@@ -24,6 +24,11 @@ const config = {
   iceServers: [{ urls: "stun:stun.l.google.com:19302" }]
 };
 
+/* DEVICE CHECK */
+function isMobileDevice() {
+  return /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
+}
+
 /* LOAD MODELS */
 Promise.all([
   faceapi.nets.tinyFaceDetector.loadFromUri("/models"),
@@ -72,17 +77,26 @@ function copyCode() {
   alert("Meeting code copied!");
 }
 
-/* START CALL (NO MEDIA YET) */
+/* START CALL — FIXED */
 function startCall() {
   joinSection.style.display = "none";
   videoSection.style.display = "flex";
-  mediaStart.style.display = "block";
 
   if (isHost) dashboard.style.display = "block";
   else selfControls.style.display = "block";
+
+  // 🔑 ALWAYS JOIN ROOM FIRST
+  socket.emit("join-room", roomId);
+
+  // Mobile needs tap, desktop auto-starts
+  if (isMobileDevice()) {
+    mediaStart.style.display = "block";
+  } else {
+    startMedia();
+  }
 }
 
-/* 🔑 EXPLICIT MEDIA START — MOBILE FIX */
+/* START MEDIA */
 function startMedia() {
   mediaStart.style.display = "none";
 
@@ -97,7 +111,6 @@ function startMedia() {
       isMuted = false;
       updateMicUI();
 
-      socket.emit("join-room", roomId);
       startEmotionDetection();
       setTimeout(initChart, 400);
     })
@@ -107,7 +120,7 @@ function startMedia() {
     });
 }
 
-/* AUDIO */
+/* MUTE */
 function toggleSelfMute() {
   const track = localStream.getAudioTracks()[0];
   track.enabled = !track.enabled;
@@ -125,6 +138,7 @@ function startEmotionDetection() {
     if (det && det.expressions) {
       const emotion = Object.keys(det.expressions)
         .reduce((a, b) => det.expressions[a] > det.expressions[b] ? a : b);
+
       socket.emit("emotion", { roomId, emotion });
     }
   }, 7000);
