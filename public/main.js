@@ -10,7 +10,7 @@ const emotions = { happy: 0, neutral: 0, sad: 0, angry: 0 };
 
 const localVideo = document.getElementById("localVideo");
 const remoteVideo = document.getElementById("remoteVideo");
-const mobilePlay = document.getElementById("mobilePlay");
+const remoteAudio = document.getElementById("remoteAudio");
 
 /* Load models */
 Promise.all([
@@ -45,7 +45,7 @@ function startMedia() {
 
       localVideo.srcObject = stream;
       localVideo.muted = true;
-      localVideo.play();
+      localVideo.play().catch(() => {});
 
       document.getElementById("mediaSection").style.display = "none";
       document.getElementById("videoSection").style.display = "flex";
@@ -60,6 +60,10 @@ function startMedia() {
       }
 
       startEmotionDetection();
+    })
+    .catch(err => {
+      alert("Camera/Mic permission required");
+      console.error(err);
     });
 }
 
@@ -69,19 +73,23 @@ function createPeer() {
     iceServers: [{ urls: "stun:stun.l.google.com:19302" }]
   });
 
-  localStream.getTracks().forEach(t => peer.addTrack(t, localStream));
+  localStream.getTracks().forEach(track =>
+    peer.addTrack(track, localStream)
+  );
 
   peer.ontrack = e => {
-    remoteVideo.srcObject = e.streams[0];
+    const stream = e.streams[0];
 
-    // 🔑 GAP FIX — THIS IS WHAT WAS MISSING
+    // 🎥 VIDEO (muted autoplay-safe)
+    remoteVideo.srcObject = stream;
     remoteVideo.setAttribute("playsinline", true);
-    remoteVideo.muted = true;   // must start muted on mobile
+    remoteVideo.muted = true;
     remoteVideo.play().catch(() => {});
 
-    if (/Android|iPhone|iPad|iPod/i.test(navigator.userAgent)) {
-      mobilePlay.style.display = "block";
-    }
+    // 🔊 AUDIO (THIS FIXES MOBILE + PC)
+    remoteAudio.srcObject = stream;
+    remoteAudio.muted = false;
+    remoteAudio.play().catch(() => {});
   };
 
   peer.onicecandidate = e => {
@@ -106,13 +114,6 @@ socket.on("offer", async offer => {
 
 socket.on("answer", ans => peer.setRemoteDescription(ans));
 socket.on("ice-candidate", c => peer.addIceCandidate(c));
-
-/* Mobile unmute */
-function enableRemotePlayback() {
-  mobilePlay.style.display = "none";
-  remoteVideo.muted = false;
-  remoteVideo.play().catch(() => {});
-}
 
 /* Mute */
 function toggleMute() {
@@ -160,6 +161,7 @@ function updateDashboard() {
   chart.data.datasets[0].data = Object.values(emotions);
   chart.update();
 }
+
 
 
 

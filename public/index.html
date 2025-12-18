@@ -74,10 +74,8 @@
   <video id="remoteVideo" playsinline></video>
 </div>
 
-<!-- MOBILE UNMUTE -->
-<div class="card" id="mobilePlay" style="display:none;">
-  <button onclick="enableRemotePlayback()">Tap to hear audio</button>
-</div>
+<!-- 🔥 SEPARATE AUDIO ELEMENT (CRITICAL FIX) -->
+<audio id="remoteAudio" autoplay playsinline></audio>
 
 <div class="card" id="controls" style="display:none;">
   <button onclick="toggleMute()">Mute / Unmute</button>
@@ -102,6 +100,7 @@
 
 </body>
 </html>
+
 
 
 
