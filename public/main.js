@@ -1,5 +1,13 @@
 const socket = io();
 
+/* ✅ LOAD FACE-API MODELS (THIS WAS THE MISSING PART) */
+Promise.all([
+  faceapi.nets.tinyFaceDetector.loadFromUri("/models"),
+  faceapi.nets.faceExpressionNet.loadFromUri("/models")
+]).then(() => {
+  console.log("✅ FaceAPI models loaded");
+});
+
 let localStream, peer, roomId, chart;
 let isHost = false;
 let userName = "";
@@ -17,6 +25,7 @@ const joinBtn = document.getElementById("joinBtn");
 const startBtn = document.getElementById("startBtn");
 const nameInput = document.getElementById("nameInput");
 
+/* UI */
 hostBtn.onclick = () => {
   userName = nameInput.value.trim();
   if (!userName) return alert("Enter name");
@@ -44,6 +53,7 @@ function showMedia() {
   mediaSection.style.display = "block";
 }
 
+/* MEDIA */
 function startMedia() {
   navigator.mediaDevices.getUserMedia({ video: true, audio: true })
     .then(stream => {
@@ -66,13 +76,13 @@ function startMedia() {
     });
 }
 
-/* WebRTC */
+/* WEBRTC */
 function createPeer() {
   peer = new RTCPeerConnection({
     iceServers: [{ urls: "stun:stun.l.google.com:19302" }]
   });
 
-  localStream.getTracks().forEach(t => peer.addTrack(t, localStream));
+  localStream.getTracks().forEach(track => peer.addTrack(track, localStream));
 
   peer.ontrack = e => {
     remoteVideo.srcObject = e.streams[0];
@@ -88,7 +98,7 @@ function createPeer() {
   };
 }
 
-/* Signaling */
+/* SIGNALING */
 socket.on("ready", async () => {
   const offer = await peer.createOffer();
   await peer.setLocalDescription(offer);
@@ -105,33 +115,33 @@ socket.on("offer", async offer => {
 socket.on("answer", ans => peer.setRemoteDescription(ans));
 socket.on("ice-candidate", c => peer.addIceCandidate(c));
 
-/* Emotion detection (STABLE) */
+/* 🎭 EMOTION DETECTION (FINAL, WORKING) */
 function startEmotionDetection() {
   const emotionVideo = document.createElement("video");
   emotionVideo.srcObject = localStream;
   emotionVideo.muted = true;
+  emotionVideo.playsInline = true;
   emotionVideo.play();
 
   setInterval(async () => {
-    const det = await faceapi
+    const result = await faceapi
       .detectSingleFace(
         emotionVideo,
         new faceapi.TinyFaceDetectorOptions()
       )
       .withFaceExpressions();
 
-    if (det) {
-      const emotion = Object.keys(det.expressions)
-        .reduce((a, b) =>
-          det.expressions[a] > det.expressions[b] ? a : b
-        );
+    if (!result) return;
 
-      socket.emit("emotion", { roomId, emotion });
-    }
-  }, 6000);
+    const expressions = result.expressions;
+    const emotion = Object.keys(expressions)
+      .reduce((a, b) => expressions[a] > expressions[b] ? a : b);
+
+    socket.emit("emotion", { roomId, emotion });
+  }, 5000);
 }
 
-/* Dashboard */
+/* DASHBOARD */
 socket.on("emotion-update", emotion => {
   if (!isHost) return;
   emotions[emotion]++;
@@ -155,6 +165,7 @@ function updateDashboard() {
   chart.data.datasets[0].data = Object.values(emotions);
   chart.update();
 }
+
 
 
 

@@ -33,7 +33,7 @@ io.on("connection", socket => {
     }
   });
 
-  // 🎭 Emotion handling (STABLE)
+  // Emotion data
   socket.on("emotion", ({ roomId, emotion }) => {
     socket.to(roomId).emit("emotion-update", emotion);
   });
@@ -55,15 +55,10 @@ io.on("connection", socket => {
     for (const roomId in roomParticipants) {
       if (roomParticipants[roomId][socket.id]) {
         delete roomParticipants[roomId][socket.id];
-
         io.to(roomId).emit(
           "participants-update",
           Object.values(roomParticipants[roomId])
         );
-
-        if (Object.keys(roomParticipants[roomId]).length === 0) {
-          delete roomParticipants[roomId];
-        }
       }
     }
     console.log("User disconnected:", socket.id);
@@ -71,9 +66,10 @@ io.on("connection", socket => {
 });
 
 const PORT = process.env.PORT || 3000;
-server.listen(PORT, () =>
-  console.log("Server running on port", PORT)
-);
+server.listen(PORT, () => {
+  console.log("Server running on port", PORT);
+});
+
 
 
 
