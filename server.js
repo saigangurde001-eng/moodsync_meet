@@ -9,9 +9,10 @@ const io = new Server(server);
 app.use(express.static("public"));
 
 const roomParticipants = {};
+const activeSpeaker = {}; // roomId -> socketId
 
 io.on("connection", socket => {
-  console.log("User connected:", socket.id);
+  console.log("Connected:", socket.id);
 
   socket.on("join-room", ({ roomId, name, isHost }) => {
     socket.join(roomId);
@@ -20,10 +21,7 @@ io.on("connection", socket => {
       roomParticipants[roomId] = {};
     }
 
-    roomParticipants[roomId][socket.id] = {
-      name,
-      isHost
-    };
+    roomParticipants[roomId][socket.id] = { name, isHost };
 
     io.to(roomId).emit(
       "participants-update",
@@ -36,10 +34,25 @@ io.on("connection", socket => {
     }
   });
 
+  /* 🎤 Active speaker */
+  socket.on("speaking", ({ roomId }) => {
+    activeSpeaker[roomId] = socket.id;
+    io.to(roomId).emit("active-speaker", socket.id);
+  });
+
+  socket.on("silent", ({ roomId }) => {
+    if (activeSpeaker[roomId] === socket.id) {
+      activeSpeaker[roomId] = null;
+      io.to(roomId).emit("active-speaker", null);
+    }
+  });
+
+  /* 🎭 Emotions */
   socket.on("emotion", ({ roomId, emotion }) => {
     socket.to(roomId).emit("emotion-update", emotion);
   });
 
+  /* WebRTC signaling */
   socket.on("offer", ({ roomId, offer }) => {
     socket.to(roomId).emit("offer", offer);
   });
@@ -62,13 +75,17 @@ io.on("connection", socket => {
           Object.values(roomParticipants[roomId])
         );
 
+        if (activeSpeaker[roomId] === socket.id) {
+          activeSpeaker[roomId] = null;
+          io.to(roomId).emit("active-speaker", null);
+        }
+
         if (Object.keys(roomParticipants[roomId]).length === 0) {
           delete roomParticipants[roomId];
         }
       }
     }
-
-    console.log("User disconnected:", socket.id);
+    console.log("Disconnected:", socket.id);
   });
 });
 
