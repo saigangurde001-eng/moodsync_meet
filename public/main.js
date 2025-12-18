@@ -48,7 +48,7 @@ function updateMicUI() {
   }
 }
 
-/* ================= JOIN FLOW ================= */
+/* ================= JOIN ================= */
 function showJoinInput() {
   document.getElementById("joinInputArea").style.display = "block";
 }
@@ -60,7 +60,7 @@ function joinMeeting() {
   startCall();
 }
 
-/* ================= HOST FLOW ================= */
+/* ================= HOST ================= */
 function startAsHost() {
   isHost = true;
   roomId = Math.random().toString(36).substring(2, 8).toUpperCase();
@@ -74,7 +74,7 @@ function copyCode() {
   alert("Meeting code copied!");
 }
 
-/* ================= START CALL (MOBILE SAFE) ================= */
+/* ================= START CALL (RESTORED WORKING LOGIC) ================= */
 function startCall() {
   joinSection.style.display = "none";
   videoSection.style.display = "flex";
@@ -83,21 +83,17 @@ function startCall() {
   else selfControls.style.display = "block";
 
   navigator.mediaDevices.getUserMedia({
-    video: {
-      width: { ideal: 640 },
-      height: { ideal: 480 },
-      facingMode: "user"
-    },
+    video: true,   // 🔥 SAME AS OLD WORKING VERSION
     audio: true
   })
   .then(stream => {
     localStream = stream;
 
-    // iOS + mobile fix
+    // 🔑 MOBILE FIX
     localVideo.setAttribute("playsinline", true);
-    remoteVideo.setAttribute("playsinline", true);
-
+    localVideo.muted = true;
     localVideo.srcObject = stream;
+    localVideo.play().catch(() => {});
 
     isMuted = false;
     updateMicUI();
@@ -107,7 +103,7 @@ function startCall() {
     setTimeout(initChart, 400);
   })
   .catch(err => {
-    alert("Camera/Microphone permission denied or not supported on this device.");
+    alert("Please allow camera and microphone access");
     console.error("getUserMedia error:", err);
   });
 }
@@ -145,7 +141,6 @@ function startEmotionDetection() {
     if (det && det.expressions) {
       const emotion = Object.keys(det.expressions)
         .reduce((a, b) => det.expressions[a] > det.expressions[b] ? a : b);
-
       socket.emit("emotion", { roomId, emotion });
     }
   }, 7000); // optimized
@@ -220,6 +215,7 @@ socket.on("offer", async offer => {
 
 socket.on("answer", ans => peerConnection.setRemoteDescription(ans));
 socket.on("ice-candidate", c => peerConnection?.addIceCandidate(c));
+
 
 
 
