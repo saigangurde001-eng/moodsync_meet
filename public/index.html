@@ -74,18 +74,20 @@
   <video id="remoteVideo" playsinline></video>
 </div>
 
+<!-- separate audio for mobile -->
 <audio id="remoteAudio" autoplay playsinline></audio>
 
 <div class="card" id="controls" style="display:none;">
   <button id="muteBtn">Mute / Unmute</button>
 </div>
 
+<!-- 🎭 HOST DASHBOARD -->
 <div class="card dashboard" id="dashboard">
-  <h3>Emotion Dashboard</h3>
-  <p>Happy: <span id="happy">0</span></p>
-  <p>Neutral: <span id="neutral">0</span></p>
-  <p>Sad: <span id="sad">0</span></p>
-  <p>Angry: <span id="angry">0</span></p>
+  <h3>Emotion Dashboard (Host Only)</h3>
+  <p>😊 Happy: <span id="happy">0</span></p>
+  <p>😐 Neutral: <span id="neutral">0</span></p>
+  <p>😢 Sad: <span id="sad">0</span></p>
+  <p>😡 Angry: <span id="angry">0</span></p>
 
   <div class="chart-container">
     <canvas id="emotionChart"></canvas>
@@ -99,6 +101,7 @@
 
 </body>
 </html>
+
 
 
 
