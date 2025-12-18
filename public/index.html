@@ -3,71 +3,36 @@
 <head>
   <meta charset="UTF-8">
   <title>MoodSync Meet</title>
-
-  <style>
-    body {
-      font-family: Arial;
-      background: #eef2f7;
-      text-align: center;
-    }
-    .card {
-      background: white;
-      padding: 15px;
-      margin: 15px auto;
-      width: 70%;
-      border-radius: 10px;
-    }
-    .videos {
-      display: none;
-      gap: 10px;
-      justify-content: center;
-    }
-    .videoBox {
-      width: 45%;
-    }
-    video {
-      width: 100%;
-      background: black;
-      border-radius: 8px;
-    }
-  </style>
 </head>
 
 <body>
 
 <h1>MoodSync Meet</h1>
 
-<div class="card" id="joinSection">
+<div id="joinSection">
   <input id="nameInput" placeholder="Your Name"><br><br>
-  <button id="hostBtn">Host Meeting</button><br><br>
+  <button id="hostBtn">Host</button><br><br>
   <input id="roomInput" placeholder="Meeting Code">
   <button id="joinBtn">Join</button>
 </div>
 
-<div class="card" id="mediaSection" style="display:none;">
+<div id="mediaSection" style="display:none;">
   <button id="startBtn">Start</button>
 </div>
 
-<div class="videos" id="videoSection">
-  <div class="videoBox">
-    <b>Host</b>
-    <video id="hostVideo" playsinline autoplay></video>
-  </div>
-
-  <div class="videoBox">
-    <b>Active Speaker</b>
-    <video id="speakerVideo" playsinline autoplay></video>
-  </div>
+<div id="videoSection" style="display:none;">
+  <video id="localVideo" autoplay muted playsinline></video>
+  <video id="remoteVideo" autoplay playsinline></video>
 </div>
 
-<audio id="remoteAudio" autoplay playsinline></audio>
+<audio id="remoteAudio" autoplay></audio>
 
-<div class="card" id="dashboard" style="display:none;">
+<div id="dashboard" style="display:none;">
   <h3>Emotion Dashboard (Host)</h3>
-  <p>😊 Happy: <span id="happy">0</span></p>
-  <p>😐 Neutral: <span id="neutral">0</span></p>
-  <p>😢 Sad: <span id="sad">0</span></p>
-  <p>😡 Angry: <span id="angry">0</span></p>
+  😊 Happy: <span id="happy">0</span><br>
+  😐 Neutral: <span id="neutral">0</span><br>
+  😢 Sad: <span id="sad">0</span><br>
+  😡 Angry: <span id="angry">0</span><br>
   <canvas id="emotionChart"></canvas>
 </div>
 
@@ -78,8 +43,6 @@
 
 </body>
 </html>
-
-
 
 
 

@@ -6,10 +6,9 @@ let userName = "";
 
 const emotions = { happy: 0, neutral: 0, sad: 0, angry: 0 };
 
-const hostVideo = document.getElementById("hostVideo");
-const speakerVideo = document.getElementById("speakerVideo");
+const localVideo = document.getElementById("localVideo");
+const remoteVideo = document.getElementById("remoteVideo");
 const remoteAudio = document.getElementById("remoteAudio");
-
 const dashboard = document.getElementById("dashboard");
 const emotionChartCanvas = document.getElementById("emotionChart");
 
@@ -20,15 +19,21 @@ const nameInput = document.getElementById("nameInput");
 
 hostBtn.onclick = () => {
   userName = nameInput.value.trim();
+  if (!userName) return alert("Enter name");
+
   isHost = true;
   roomId = Math.random().toString(36).substring(2, 8).toUpperCase();
-  alert(roomId);
+  alert("Meeting Code: " + roomId);
   showMedia();
 };
 
 joinBtn.onclick = () => {
   userName = nameInput.value.trim();
+  if (!userName) return alert("Enter name");
+
   roomId = document.getElementById("roomInput").value.trim().toUpperCase();
+  if (!roomId) return alert("Enter meeting code");
+
   showMedia();
 };
 
@@ -43,12 +48,8 @@ function startMedia() {
   navigator.mediaDevices.getUserMedia({ video: true, audio: true })
     .then(stream => {
       localStream = stream;
-
-      if (isHost) {
-        hostVideo.srcObject = stream;
-        hostVideo.muted = true;
-        hostVideo.play();
-      }
+      localVideo.srcObject = stream;
+      localVideo.play();
 
       mediaSection.style.display = "none";
       videoSection.style.display = "block";
@@ -65,6 +66,7 @@ function startMedia() {
     });
 }
 
+/* WebRTC */
 function createPeer() {
   peer = new RTCPeerConnection({
     iceServers: [{ urls: "stun:stun.l.google.com:19302" }]
@@ -73,10 +75,9 @@ function createPeer() {
   localStream.getTracks().forEach(t => peer.addTrack(t, localStream));
 
   peer.ontrack = e => {
-    const stream = e.streams[0];
-    speakerVideo.srcObject = stream;
-    speakerVideo.play();
-    remoteAudio.srcObject = stream;
+    remoteVideo.srcObject = e.streams[0];
+    remoteVideo.play();
+    remoteAudio.srcObject = e.streams[0];
     remoteAudio.play();
   };
 
@@ -87,7 +88,7 @@ function createPeer() {
   };
 }
 
-/* SIGNALING */
+/* Signaling */
 socket.on("ready", async () => {
   const offer = await peer.createOffer();
   await peer.setLocalDescription(offer);
@@ -104,17 +105,17 @@ socket.on("offer", async offer => {
 socket.on("answer", ans => peer.setRemoteDescription(ans));
 socket.on("ice-candidate", c => peer.addIceCandidate(c));
 
-/* ✅ FIXED EMOTION DETECTION */
+/* Emotion detection (STABLE) */
 function startEmotionDetection() {
-  const localEmotionVideo = document.createElement("video");
-  localEmotionVideo.srcObject = localStream;
-  localEmotionVideo.muted = true;
-  localEmotionVideo.play();
+  const emotionVideo = document.createElement("video");
+  emotionVideo.srcObject = localStream;
+  emotionVideo.muted = true;
+  emotionVideo.play();
 
   setInterval(async () => {
     const det = await faceapi
       .detectSingleFace(
-        localEmotionVideo,
+        emotionVideo,
         new faceapi.TinyFaceDetectorOptions()
       )
       .withFaceExpressions();
@@ -130,7 +131,7 @@ function startEmotionDetection() {
   }, 6000);
 }
 
-/* DASHBOARD */
+/* Dashboard */
 socket.on("emotion-update", emotion => {
   if (!isHost) return;
   emotions[emotion]++;
@@ -154,6 +155,7 @@ function updateDashboard() {
   chart.data.datasets[0].data = Object.values(emotions);
   chart.update();
 }
+
 
 
 
