@@ -6,7 +6,7 @@
 
   <style>
     body {
-      font-family: "Segoe UI", Arial, sans-serif;
+      font-family: Arial, sans-serif;
       background: #eef2f7;
       text-align: center;
       margin: 0;
@@ -23,13 +23,6 @@
       width: 70%;
     }
 
-    input {
-      padding: 8px;
-      font-size: 16px;
-      width: 220px;
-      text-align: center;
-    }
-
     button {
       padding: 8px 14px;
       margin: 6px;
@@ -42,6 +35,13 @@
 
     button:hover { background: #1a252f; }
 
+    input {
+      padding: 8px;
+      font-size: 16px;
+      width: 220px;
+      text-align: center;
+    }
+
     .videos {
       display: none;
       justify-content: center;
@@ -50,11 +50,10 @@
 
     video {
       width: 45%;
-      border-radius: 10px;
       background: black;
+      border-radius: 10px;
     }
 
-    /* 🔒 DASHBOARD FIX */
     .dashboard {
       display: none;
       max-height: 520px;
@@ -99,10 +98,16 @@
   <button onclick="copyCode()">Copy Code</button>
 </div>
 
+<!-- EXPLICIT MEDIA START (MOBILE FIX) -->
+<div class="card" id="mediaStart" style="display:none;">
+  <h3>Enable Camera & Microphone</h3>
+  <button onclick="startMedia()">Start Camera</button>
+</div>
+
 <!-- VIDEO -->
 <div class="videos" id="videoSection">
-  <video id="localVideo" autoplay muted playsinline></video>
-  <video id="remoteVideo" autoplay playsinline></video>
+  <video id="localVideo" muted playsinline></video>
+  <video id="remoteVideo" playsinline></video>
 </div>
 
 <!-- PARTICIPANT CONTROLS -->
@@ -125,7 +130,6 @@
 
   <p><b>Overall Mood:</b> <span id="overallMood">—</span></p>
 
-  <!-- FIXED CHART CONTAINER -->
   <div class="chart-container">
     <canvas id="emotionChart"></canvas>
   </div>
@@ -138,6 +142,7 @@
 
 </body>
 </html>
+
 
 
 
