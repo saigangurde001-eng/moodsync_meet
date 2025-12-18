@@ -9,7 +9,7 @@ const io = new Server(server);
 app.use(express.static("public"));
 
 const roomParticipants = {};
-const activeSpeaker = {}; // roomId -> socketId
+const activeSpeaker = {};
 
 io.on("connection", socket => {
   console.log("Connected:", socket.id);
@@ -34,7 +34,6 @@ io.on("connection", socket => {
     }
   });
 
-  /* 🎤 Active speaker */
   socket.on("speaking", ({ roomId }) => {
     activeSpeaker[roomId] = socket.id;
     io.to(roomId).emit("active-speaker", socket.id);
@@ -47,12 +46,10 @@ io.on("connection", socket => {
     }
   });
 
-  /* 🎭 Emotions */
   socket.on("emotion", ({ roomId, emotion }) => {
     socket.to(roomId).emit("emotion-update", emotion);
   });
 
-  /* WebRTC signaling */
   socket.on("offer", ({ roomId, offer }) => {
     socket.to(roomId).emit("offer", offer);
   });
@@ -85,7 +82,6 @@ io.on("connection", socket => {
         }
       }
     }
-    console.log("Disconnected:", socket.id);
   });
 });
 

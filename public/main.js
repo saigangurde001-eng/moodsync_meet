@@ -1,23 +1,28 @@
 const socket = io();
 
-let localStream, peer, roomId;
+let localStream, peer, roomId, chart;
 let isHost = false;
 let userName = "";
+
+const emotions = { happy: 0, neutral: 0, sad: 0, angry: 0 };
 
 const hostVideo = document.getElementById("hostVideo");
 const speakerVideo = document.getElementById("speakerVideo");
 const remoteAudio = document.getElementById("remoteAudio");
 
+const dashboard = document.getElementById("dashboard");
+const emotionChartCanvas = document.getElementById("emotionChart");
+
 const hostBtn = document.getElementById("hostBtn");
 const joinBtn = document.getElementById("joinBtn");
 const startBtn = document.getElementById("startBtn");
 const nameInput = document.getElementById("nameInput");
-const participantList = document.getElementById("participantList");
 
-/* UI actions */
+/* UI */
 hostBtn.onclick = () => {
   userName = nameInput.value.trim();
   if (!userName) return alert("Enter name");
+
   isHost = true;
   roomId = Math.random().toString(36).substring(2, 8).toUpperCase();
   alert("Meeting Code: " + roomId);
@@ -27,8 +32,10 @@ hostBtn.onclick = () => {
 joinBtn.onclick = () => {
   userName = nameInput.value.trim();
   if (!userName) return alert("Enter name");
+
   roomId = document.getElementById("roomInput").value.trim().toUpperCase();
   if (!roomId) return alert("Enter meeting code");
+
   showMedia();
 };
 
@@ -57,6 +64,11 @@ function startMedia() {
       socket.emit("join-room", { roomId, name: userName, isHost });
       createPeer();
 
+      if (isHost) {
+        dashboard.style.display = "block";
+        initChart();
+      }
+
       if (!/Mobi|Android/i.test(navigator.userAgent)) {
         detectSpeaking();
       }
@@ -76,13 +88,15 @@ function createPeer() {
   peer.ontrack = e => {
     const stream = e.streams[0];
 
+    // Everyone sees host
     if (!isHost) {
       hostVideo.srcObject = stream;
       hostVideo.play();
-    } else {
-      speakerVideo.srcObject = stream;
-      speakerVideo.play();
     }
+
+    // Everyone sees active speaker
+    speakerVideo.srcObject = stream;
+    speakerVideo.play();
 
     remoteAudio.srcObject = stream;
     remoteAudio.play();
@@ -130,22 +144,45 @@ function detectSpeaking() {
   }, 800);
 }
 
-/* Participant list */
-socket.on("participants-update", list => {
-  participantList.innerHTML = "";
-  list.forEach(p => {
-    const li = document.createElement("li");
-    li.innerText = p.name + (p.isHost ? " (Host)" : "");
-    participantList.appendChild(li);
-  });
-});
-
-/* Emotion detection (unchanged) */
+/* Emotion detection */
 function startEmotionDetection() {
   setInterval(async () => {
-    if (!localStream) return;
-    // already implemented earlier
+    const det = await faceapi
+      .detectSingleFace(hostVideo, new faceapi.TinyFaceDetectorOptions())
+      .withFaceExpressions();
+
+    if (det) {
+      const emotion = Object.keys(det.expressions)
+        .reduce((a, b) => det.expressions[a] > det.expressions[b] ? a : b);
+
+      socket.emit("emotion", { roomId, emotion });
+    }
   }, 6000);
+}
+
+/* Dashboard */
+socket.on("emotion-update", emotion => {
+  if (!isHost) return;
+  emotions[emotion]++;
+  updateDashboard();
+});
+
+function initChart() {
+  chart = new Chart(emotionChartCanvas, {
+    type: "pie",
+    data: {
+      labels: Object.keys(emotions),
+      datasets: [{ data: Object.values(emotions) }]
+    }
+  });
+}
+
+function updateDashboard() {
+  for (let e in emotions) {
+    document.getElementById(e).innerText = emotions[e];
+  }
+  chart.data.datasets[0].data = Object.values(emotions);
+  chart.update();
 }
 
 
