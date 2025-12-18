@@ -6,21 +6,13 @@ let roomId;
 let isHost = false;
 let chart;
 
-const emotions = {
-  happy: 0,
-  neutral: 0,
-  sad: 0,
-  angry: 0,
-  surprised: 0,
-  fearful: 0,
-  disgusted: 0
-};
+const emotions = { happy: 0, neutral: 0, sad: 0, angry: 0 };
 
 const localVideo = document.getElementById("localVideo");
 const remoteVideo = document.getElementById("remoteVideo");
 const mobilePlay = document.getElementById("mobilePlay");
 
-/* Load emotion models */
+/* Load models */
 Promise.all([
   faceapi.nets.tinyFaceDetector.loadFromUri("/models"),
   faceapi.nets.faceExpressionNet.loadFromUri("/models")
@@ -31,28 +23,29 @@ function hostMeeting() {
   isHost = true;
   roomId = Math.random().toString(36).substring(2, 8).toUpperCase();
   alert("Meeting Code: " + roomId);
-  showMediaStart();
+  showMedia();
 }
 
 function joinMeeting() {
   roomId = document.getElementById("roomInput").value.trim().toUpperCase();
   if (!roomId) return alert("Enter meeting code");
-  showMediaStart();
+  showMedia();
 }
 
-function showMediaStart() {
+function showMedia() {
   document.getElementById("joinSection").style.display = "none";
   document.getElementById("mediaSection").style.display = "block";
 }
 
-/* Start camera & mic */
+/* Start media */
 function startMedia() {
   navigator.mediaDevices.getUserMedia({ video: true, audio: true })
     .then(stream => {
       localStream = stream;
+
       localVideo.srcObject = stream;
       localVideo.muted = true;
-      localVideo.play().catch(() => {});
+      localVideo.play();
 
       document.getElementById("mediaSection").style.display = "none";
       document.getElementById("videoSection").style.display = "flex";
@@ -80,9 +73,12 @@ function createPeer() {
 
   peer.ontrack = e => {
     remoteVideo.srcObject = e.streams[0];
+
+    // 🔑 GAP FIX — THIS IS WHAT WAS MISSING
+    remoteVideo.setAttribute("playsinline", true);
+    remoteVideo.muted = true;   // must start muted on mobile
     remoteVideo.play().catch(() => {});
 
-    // 📱 Mobile browsers require user tap
     if (/Android|iPhone|iPad|iPod/i.test(navigator.userAgent)) {
       mobilePlay.style.display = "block";
     }
@@ -111,7 +107,7 @@ socket.on("offer", async offer => {
 socket.on("answer", ans => peer.setRemoteDescription(ans));
 socket.on("ice-candidate", c => peer.addIceCandidate(c));
 
-/* Mobile playback enable */
+/* Mobile unmute */
 function enableRemotePlayback() {
   mobilePlay.style.display = "none";
   remoteVideo.muted = false;
@@ -131,7 +127,7 @@ function startEmotionDetection() {
       .detectSingleFace(localVideo, new faceapi.TinyFaceDetectorOptions())
       .withFaceExpressions();
 
-    if (det && det.expressions) {
+    if (det) {
       const emotion = Object.keys(det.expressions)
         .reduce((a, b) => det.expressions[a] > det.expressions[b] ? a : b);
 
@@ -141,9 +137,9 @@ function startEmotionDetection() {
 }
 
 /* Dashboard */
-socket.on("emotion-update", emotion => {
+socket.on("emotion-update", e => {
   if (!isHost) return;
-  emotions[emotion]++;
+  emotions[e]++;
   updateDashboard();
 });
 
@@ -153,8 +149,7 @@ function initChart() {
     data: {
       labels: Object.keys(emotions),
       datasets: [{ data: Object.values(emotions) }]
-    },
-    options: { responsive: true }
+    }
   });
 }
 
@@ -165,6 +160,7 @@ function updateDashboard() {
   chart.data.datasets[0].data = Object.values(emotions);
   chart.update();
 }
+
 
 
 
