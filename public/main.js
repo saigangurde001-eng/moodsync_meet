@@ -1,118 +1,74 @@
 const socket = io();
 
-const localVideo = document.getElementById("localVideo");
-const remoteVideo = document.getElementById("remoteVideo");
-const joinSection = document.getElementById("joinSection");
-const videoSection = document.getElementById("videoSection");
-const dashboard = document.getElementById("dashboard");
-const selfControls = document.getElementById("selfControls");
-const mediaStart = document.getElementById("mediaStart");
-
 let localStream;
-let peerConnection;
+let peer;
 let roomId;
 let isHost = false;
-let isMuted = false;
-let emotionChart;
+let chart;
 
-const emotionCounts = {
-  happy: 0, neutral: 0, sad: 0,
-  angry: 0, surprised: 0, fearful: 0, disgusted: 0
+const emotions = {
+  happy: 0,
+  neutral: 0,
+  sad: 0,
+  angry: 0,
+  surprised: 0,
+  fearful: 0,
+  disgusted: 0
 };
 
-const config = {
-  iceServers: [{ urls: "stun:stun.l.google.com:19302" }]
-};
+const localVideo = document.getElementById("localVideo");
+const remoteVideo = document.getElementById("remoteVideo");
 
-/* DEVICE CHECK */
-function isMobileDevice() {
-  return /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
-}
-
-/* LOAD MODELS */
+/* Load emotion models */
 Promise.all([
   faceapi.nets.tinyFaceDetector.loadFromUri("/models"),
   faceapi.nets.faceExpressionNet.loadFromUri("/models")
 ]);
 
-/* UI */
-function updateMicUI() {
-  const btn = document.getElementById("selfMuteBtn");
-  const status = document.getElementById("micStatus");
+/* ================= HOST / JOIN ================= */
 
-  if (isMuted) {
-    btn.innerText = "Unmute Mic 🎤";
-    status.innerText = "🔇 You are muted";
-    status.style.color = "red";
-  } else {
-    btn.innerText = "Mute Mic 🔇";
-    status.innerText = "🎤 Mic is ON";
-    status.style.color = "green";
-  }
-}
-
-/* JOIN */
-function showJoinInput() {
-  document.getElementById("joinInputArea").style.display = "block";
+function hostMeeting() {
+  isHost = true;
+  roomId = Math.random().toString(36).substring(2, 8).toUpperCase();
+  alert("Meeting Code: " + roomId);
+  showMediaStart();
 }
 
 function joinMeeting() {
   roomId = document.getElementById("roomInput").value.trim().toUpperCase();
   if (!roomId) return alert("Enter meeting code");
-  isHost = false;
-  startCall();
+  showMediaStart();
 }
 
-/* HOST */
-function startAsHost() {
-  isHost = true;
-  roomId = Math.random().toString(36).substring(2, 8).toUpperCase();
-  document.getElementById("hostCode").value = roomId;
-  document.getElementById("hostCodeArea").style.display = "block";
-  startCall();
+function showMediaStart() {
+  document.getElementById("joinSection").style.display = "none";
+  document.getElementById("mediaSection").style.display = "block";
 }
 
-function copyCode() {
-  navigator.clipboard.writeText(roomId);
-  alert("Meeting code copied!");
-}
+/* ================= START MEDIA ================= */
 
-/* START CALL — FIXED */
-function startCall() {
-  joinSection.style.display = "none";
-  videoSection.style.display = "flex";
-
-  if (isHost) dashboard.style.display = "block";
-  else selfControls.style.display = "block";
-
-  // 🔑 ALWAYS JOIN ROOM FIRST
-  socket.emit("join-room", roomId);
-
-  // Mobile needs tap, desktop auto-starts
-  if (isMobileDevice()) {
-    mediaStart.style.display = "block";
-  } else {
-    startMedia();
-  }
-}
-
-/* START MEDIA */
 function startMedia() {
-  mediaStart.style.display = "none";
-
   navigator.mediaDevices.getUserMedia({ video: true, audio: true })
     .then(stream => {
       localStream = stream;
-
       localVideo.srcObject = stream;
       localVideo.muted = true;
       localVideo.play().catch(() => {});
 
-      isMuted = false;
-      updateMicUI();
+      document.getElementById("mediaSection").style.display = "none";
+      document.getElementById("videoSection").style.display = "flex";
+      document.getElementById("controls").style.display = "block";
+
+      socket.emit("join-room", roomId);
+
+      createPeer();
+
+      if (isHost) {
+        document.getElementById("dashboard").style.display = "block";
+        initChart();
+      }
 
       startEmotionDetection();
-      setTimeout(initChart, 400);
     })
     .catch(err => {
       alert("Please allow camera & microphone");
@@ -120,64 +76,104 @@ function startMedia() {
     });
 }
 
-/* MUTE */
-function toggleSelfMute() {
-  const track = localStream.getAudioTracks()[0];
-  track.enabled = !track.enabled;
-  isMuted = !track.enabled;
-  updateMicUI();
+/* ================= WEBRTC ================= */
+
+function createPeer() {
+  peer = new RTCPeerConnection({
+    iceServers: [{ urls: "stun:stun.l.google.com:19302" }]
+  });
+
+  localStream.getTracks().forEach(track =>
+    peer.addTrack(track, localStream)
+  );
+
+  peer.ontrack = e => {
+    remoteVideo.srcObject = e.streams[0];
+    remoteVideo.play().catch(() => {});
+  };
+
+  peer.onicecandidate = e => {
+    if (e.candidate) {
+      socket.emit("ice-candidate", {
+        roomId,
+        candidate: e.candidate
+      });
+    }
+  };
 }
 
-/* EMOTIONS */
+/* 🔑 READY → CREATE OFFER (HOST OR FIRST PEER) */
+socket.on("ready", async () => {
+  const offer = await peer.createOffer();
+  await peer.setLocalDescription(offer);
+  socket.emit("offer", { roomId, offer });
+});
+
+/* 🔁 RECEIVE OFFER */
+socket.on("offer", async offer => {
+  await peer.setRemoteDescription(offer);
+  const answer = await peer.createAnswer();
+  await peer.setLocalDescription(answer);
+  socket.emit("answer", { roomId, answer });
+});
+
+/* 🔁 RECEIVE ANSWER */
+socket.on("answer", async answer => {
+  await peer.setRemoteDescription(answer);
+});
+
+/* 🔁 ICE CANDIDATES */
+socket.on("ice-candidate", async candidate => {
+  if (candidate) {
+    await peer.addIceCandidate(candidate);
+  }
+});
+
+/* ================= MUTE ================= */
+
+function toggleMute() {
+  const track = localStream.getAudioTracks()[0];
+  track.enabled = !track.enabled;
+}
+
+/* ================= EMOTION DETECTION ================= */
+
 function startEmotionDetection() {
   setInterval(async () => {
     const det = await faceapi
-      .detectSingleFace(localVideo, new faceapi.TinyFaceDetectorOptions())
+      .detectSingleFace(
+        localVideo,
+        new faceapi.TinyFaceDetectorOptions()
+      )
       .withFaceExpressions();
 
     if (det && det.expressions) {
       const emotion = Object.keys(det.expressions)
-        .reduce((a, b) => det.expressions[a] > det.expressions[b] ? a : b);
+        .reduce((a, b) =>
+          det.expressions[a] > det.expressions[b] ? a : b
+        );
 
       socket.emit("emotion", { roomId, emotion });
     }
-  }, 7000);
+  }, 6000);
 }
 
-/* DASHBOARD */
+/* ================= DASHBOARD ================= */
+
 socket.on("emotion-update", emotion => {
   if (!isHost) return;
-  emotionCounts[emotion]++;
-  updateStats();
+  emotions[emotion]++;
+  updateDashboard();
 });
 
-function updateStats() {
-  let top = "neutral", max = 0;
-  for (let e in emotionCounts) {
-    if (emotionCounts[e] > max) {
-      max = emotionCounts[e];
-      top = e;
-    }
-    document.getElementById(e).innerText = emotionCounts[e];
-  }
-  document.getElementById("overallMood").innerText = top;
-
-  if (emotionChart) {
-    emotionChart.data.datasets[0].data = Object.values(emotionCounts);
-    emotionChart.update();
-  }
-}
-
-/* PIE CHART */
 function initChart() {
-  if (!isHost || emotionChart) return;
-
-  const ctx = document.getElementById("emotionChart").getContext("2d");
-  emotionChart = new Chart(ctx, {
+  chart = new Chart(document.getElementById("emotionChart"), {
     type: "pie",
     data: {
-      labels: Object.keys(emotionCounts),
-      datasets: [{ data: Object.values(emotionCounts) }]
+      labels: Object.keys(emotions),
+      datasets: [{
+        data: Object.values(emotions)
+      }]
     },
     options: {
       responsive: true,
@@ -185,6 +181,17 @@ function initChart() {
     }
   });
 }
+
+function updateDashboard() {
+  for (let e in emotions) {
+    const el = document.getElementById(e);
+    if (el) el.innerText = emotions[e];
+  }
+  chart.data.datasets[0].data = Object.values(emotions);
+  chart.update();
+}
+
+
 
 
 

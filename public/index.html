@@ -1,134 +1,92 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
   <meta charset="UTF-8">
-  <title>MoodSync</title>
+  <title>MoodSync Meet</title>
 
   <style>
     body {
       font-family: Arial, sans-serif;
       background: #eef2f7;
       text-align: center;
-      margin: 0;
     }
 
     h1 { margin-top: 15px; }
 
     .card {
       background: white;
-      padding: 16px;
-      border-radius: 10px;
-      box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+      padding: 15px;
       margin: 15px auto;
       width: 70%;
-    }
-
-    button {
-      padding: 8px 14px;
-      margin: 6px;
-      border-radius: 6px;
-      border: none;
-      cursor: pointer;
-      background: #2c3e50;
-      color: white;
-    }
-
-    button:hover { background: #1a252f; }
-
-    input {
-      padding: 8px;
-      font-size: 16px;
-      width: 220px;
-      text-align: center;
-    }
-
-    .videos {
-      display: none;
-      justify-content: center;
-      gap: 12px;
+      border-radius: 10px;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.1);
     }
 
     video {
       width: 45%;
       background: black;
-      border-radius: 10px;
+      border-radius: 8px;
+    }
+
+    .videos {
+      display: none;
+      justify-content: center;
+      gap: 10px;
+    }
+
+    button {
+      padding: 8px 14px;
+      margin: 6px;
+      border: none;
+      border-radius: 6px;
+      background: #2c3e50;
+      color: white;
+      cursor: pointer;
     }
 
     .dashboard {
       display: none;
-      max-height: 520px;
+      max-height: 450px;
       overflow-y: auto;
     }
 
     .chart-container {
-      height: 300px;
-      position: relative;
-    }
-
-    .status {
-      font-weight: bold;
-      margin-top: 6px;
+      height: 280px;
     }
   </style>
 </head>
 
 <body>
 
-<h1>MoodSync</h1>
+<h1>MoodSync Meet</h1>
 
-<!-- JOIN / START -->
 <div class="card" id="joinSection">
-  <button onclick="startAsHost()">Start Meeting (Host)</button>
-  <br><br>
-  <button onclick="showJoinInput()">Join as Participant</button>
-
-  <div id="joinInputArea" style="display:none;">
-    <br>
-    <input type="text" id="roomInput" placeholder="Enter Meeting Code">
-    <br><br>
-    <button onclick="joinMeeting()">Join Meeting</button>
-  </div>
+  <button onclick="hostMeeting()">Host Meeting</button><br><br>
+  <input id="roomInput" placeholder="Meeting Code">
+  <button onclick="joinMeeting()">Join</button>
 </div>
 
-<!-- HOST CODE -->
-<div class="card" id="hostCodeArea" style="display:none;">
-  <h3>Meeting Code</h3>
-  <input type="text" id="hostCode" readonly>
-  <br><br>
-  <button onclick="copyCode()">Copy Code</button>
-</div>
-
-<!-- MOBILE MEDIA START -->
-<div class="card" id="mediaStart" style="display:none;">
+<div class="card" id="mediaSection" style="display:none;">
   <h3>Enable Camera & Microphone</h3>
-  <button onclick="startMedia()">Start Camera</button>
+  <button onclick="startMedia()">Start</button>
 </div>
 
-<!-- VIDEO -->
 <div class="videos" id="videoSection">
   <video id="localVideo" muted playsinline></video>
   <video id="remoteVideo" playsinline></video>
 </div>
 
-<!-- PARTICIPANT CONTROLS -->
-<div class="card" id="selfControls" style="display:none;">
-  <button id="selfMuteBtn" onclick="toggleSelfMute()">Mute Mic 🔇</button>
-  <p id="micStatus" class="status">🎤 Mic is ON</p>
+<div class="card" id="controls" style="display:none;">
+  <button onclick="toggleMute()">Mute / Unmute</button>
 </div>
 
-<!-- HOST DASHBOARD -->
 <div class="card dashboard" id="dashboard">
-  <h3>Host Emotion Dashboard</h3>
+  <h3>Emotion Dashboard</h3>
 
   <p>😊 Happy: <span id="happy">0</span></p>
   <p>😐 Neutral: <span id="neutral">0</span></p>
   <p>😢 Sad: <span id="sad">0</span></p>
   <p>😡 Angry: <span id="angry">0</span></p>
-  <p>😲 Surprised: <span id="surprised">0</span></p>
-  <p>😨 Fearful: <span id="fearful">0</span></p>
-  <p>🤢 Disgusted: <span id="disgusted">0</span></p>
-
-  <p><b>Overall Mood:</b> <span id="overallMood">—</span></p>
 
   <div class="chart-container">
     <canvas id="emotionChart"></canvas>
@@ -142,7 +100,6 @@
 
 </body>
 </html>
-
 
 
 
