@@ -5,6 +5,7 @@ let peer;
 let roomId;
 let isHost = false;
 let chart;
+let audioUnlocked = false;
 
 const emotions = { happy: 0, neutral: 0, sad: 0, angry: 0 };
 
@@ -12,7 +13,21 @@ const localVideo = document.getElementById("localVideo");
 const remoteVideo = document.getElementById("remoteVideo");
 const remoteAudio = document.getElementById("remoteAudio");
 
-/* Load emotion models */
+/* 🔑 AUDIO CONTEXT UNLOCK (MOBILE FIX) */
+function unlockAudioContext() {
+  if (audioUnlocked) return;
+
+  const AudioContext = window.AudioContext || window.webkitAudioContext;
+  const audioCtx = new AudioContext();
+
+  if (audioCtx.state === "suspended") {
+    audioCtx.resume();
+  }
+
+  audioUnlocked = true;
+}
+
+/* Load face-api models */
 Promise.all([
   faceapi.nets.tinyFaceDetector.loadFromUri("/models"),
   faceapi.nets.faceExpressionNet.loadFromUri("/models")
@@ -37,23 +52,18 @@ function showMedia() {
   document.getElementById("mediaSection").style.display = "block";
 }
 
-/* 🎯 START MEDIA — MOBILE SAFE */
+/* 🎯 START MEDIA (FINAL MOBILE-SAFE VERSION) */
 function startMedia() {
   navigator.mediaDevices.getUserMedia({
     video: { facingMode: "user" },
-    audio: {
-      echoCancellation: true,
-      noiseSuppression: true
-    }
+    audio: { echoCancellation: true, noiseSuppression: true }
   }).then(stream => {
     localStream = stream;
 
-    /* 🔥 Force mic ON (mobile fix) */
+    /* Force mic ON (iOS fix) */
     localStream.getAudioTracks().forEach(t => t.enabled = true);
 
-    /* Local video (mobile-safe) */
-    localVideo.setAttribute("playsinline", true);
-    localVideo.setAttribute("autoplay", true);
+    /* Local video */
     localVideo.muted = true;
     localVideo.srcObject = stream;
     localVideo.play().catch(() => {});
@@ -72,7 +82,7 @@ function startMedia() {
 
     startEmotionDetection();
   }).catch(err => {
-    alert("Camera / microphone permission required");
+    alert("Camera & microphone permission required");
     console.error(err);
   });
 }
@@ -92,11 +102,10 @@ function createPeer() {
 
     /* Video (muted autoplay-safe) */
     remoteVideo.srcObject = stream;
-    remoteVideo.setAttribute("playsinline", true);
     remoteVideo.muted = true;
     remoteVideo.play().catch(() => {});
 
-    /* 🔊 Audio (critical for mobile) */
+    /* Audio (separate element — mobile safe) */
     remoteAudio.srcObject = stream;
     remoteAudio.muted = false;
     remoteAudio.play().catch(() => {});
@@ -170,6 +179,8 @@ function updateDashboard() {
   }
   chart.data.datasets[0].data = Object.values(emotions);
   chart.update();
+}
+
 }
 
 

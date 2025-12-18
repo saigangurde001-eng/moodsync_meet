@@ -66,7 +66,8 @@
 
 <div class="card" id="mediaSection" style="display:none;">
   <h3>Enable Camera & Microphone</h3>
-  <button onclick="startMedia()">Start</button>
+  <!-- 🔑 USER GESTURE UNLOCK -->
+  <button onclick="unlockAudioContext(); startMedia();">Start</button>
 </div>
 
 <div class="videos" id="videoSection">
@@ -74,7 +75,7 @@
   <video id="remoteVideo" playsinline></video>
 </div>
 
-<!-- 🔊 Separate audio (required for mobile) -->
+<!-- 🔊 Separate audio element (required on mobile) -->
 <audio id="remoteAudio" autoplay playsinline></audio>
 
 <div class="card" id="controls" style="display:none;">
@@ -100,6 +101,7 @@
 
 </body>
 </html>
+
 
 
 
