@@ -12,7 +12,7 @@ const localVideo = document.getElementById("localVideo");
 const remoteVideo = document.getElementById("remoteVideo");
 const remoteAudio = document.getElementById("remoteAudio");
 
-/* Load models */
+/* Load emotion models */
 Promise.all([
   faceapi.nets.tinyFaceDetector.loadFromUri("/models"),
   faceapi.nets.faceExpressionNet.loadFromUri("/models")
@@ -37,34 +37,44 @@ function showMedia() {
   document.getElementById("mediaSection").style.display = "block";
 }
 
-/* Start media */
+/* 🎯 START MEDIA — MOBILE SAFE */
 function startMedia() {
-  navigator.mediaDevices.getUserMedia({ video: true, audio: true })
-    .then(stream => {
-      localStream = stream;
+  navigator.mediaDevices.getUserMedia({
+    video: { facingMode: "user" },
+    audio: {
+      echoCancellation: true,
+      noiseSuppression: true
+    }
+  }).then(stream => {
+    localStream = stream;
 
-      localVideo.srcObject = stream;
-      localVideo.muted = true;
-      localVideo.play().catch(() => {});
+    /* 🔥 Force mic ON (mobile fix) */
+    localStream.getAudioTracks().forEach(t => t.enabled = true);
 
-      document.getElementById("mediaSection").style.display = "none";
-      document.getElementById("videoSection").style.display = "flex";
-      document.getElementById("controls").style.display = "block";
+    /* Local video (mobile-safe) */
+    localVideo.setAttribute("playsinline", true);
+    localVideo.setAttribute("autoplay", true);
+    localVideo.muted = true;
+    localVideo.srcObject = stream;
+    localVideo.play().catch(() => {});
 
-      socket.emit("join-room", roomId);
-      createPeer();
+    document.getElementById("mediaSection").style.display = "none";
+    document.getElementById("videoSection").style.display = "flex";
+    document.getElementById("controls").style.display = "block";
 
-      if (isHost) {
-        document.getElementById("dashboard").style.display = "block";
-        initChart();
-      }
+    socket.emit("join-room", roomId);
+    createPeer();
 
-      startEmotionDetection();
-    })
-    .catch(err => {
-      alert("Camera/Mic permission required");
-      console.error(err);
-    });
+    if (isHost) {
+      document.getElementById("dashboard").style.display = "block";
+      initChart();
+    }
+
+    startEmotionDetection();
+  }).catch(err => {
+    alert("Camera / microphone permission required");
+    console.error(err);
+  });
 }
 
 /* WebRTC */
@@ -80,13 +90,13 @@ function createPeer() {
   peer.ontrack = e => {
     const stream = e.streams[0];
 
-    // 🎥 VIDEO (muted autoplay-safe)
+    /* Video (muted autoplay-safe) */
     remoteVideo.srcObject = stream;
     remoteVideo.setAttribute("playsinline", true);
     remoteVideo.muted = true;
     remoteVideo.play().catch(() => {});
 
-    // 🔊 AUDIO (THIS FIXES MOBILE + PC)
+    /* 🔊 Audio (critical for mobile) */
     remoteAudio.srcObject = stream;
     remoteAudio.muted = false;
     remoteAudio.play().catch(() => {});
@@ -161,6 +171,7 @@ function updateDashboard() {
   chart.data.datasets[0].data = Object.values(emotions);
   chart.update();
 }
+
 
 
 
