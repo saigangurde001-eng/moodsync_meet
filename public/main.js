@@ -1,10 +1,6 @@
 const socket = io();
 
-let localStream;
-let peer;
-let roomId;
-let isHost = false;
-let chart;
+let localStream, peer, roomId, isHost = false, chart;
 let audioUnlocked = false;
 
 const emotions = { happy: 0, neutral: 0, sad: 0, angry: 0 };
@@ -13,60 +9,56 @@ const localVideo = document.getElementById("localVideo");
 const remoteVideo = document.getElementById("remoteVideo");
 const remoteAudio = document.getElementById("remoteAudio");
 
-/* 🔑 AUDIO CONTEXT UNLOCK (MOBILE FIX) */
+const hostBtn = document.getElementById("hostBtn");
+const joinBtn = document.getElementById("joinBtn");
+const startBtn = document.getElementById("startBtn");
+const muteBtn = document.getElementById("muteBtn");
+
+/* 🔑 AUDIO UNLOCK */
 function unlockAudioContext() {
   if (audioUnlocked) return;
-
-  const AudioContext = window.AudioContext || window.webkitAudioContext;
-  const audioCtx = new AudioContext();
-
-  if (audioCtx.state === "suspended") {
-    audioCtx.resume();
-  }
-
+  const ctx = new (window.AudioContext || window.webkitAudioContext)();
+  if (ctx.state === "suspended") ctx.resume();
   audioUnlocked = true;
 }
 
-/* Load face-api models */
-Promise.all([
-  faceapi.nets.tinyFaceDetector.loadFromUri("/models"),
-  faceapi.nets.faceExpressionNet.loadFromUri("/models")
-]);
-
-/* Host / Join */
-function hostMeeting() {
+/* EVENT BINDINGS */
+hostBtn.addEventListener("click", () => {
   isHost = true;
   roomId = Math.random().toString(36).substring(2, 8).toUpperCase();
   alert("Meeting Code: " + roomId);
   showMedia();
-}
+});
 
-function joinMeeting() {
+joinBtn.addEventListener("click", () => {
   roomId = document.getElementById("roomInput").value.trim().toUpperCase();
   if (!roomId) return alert("Enter meeting code");
   showMedia();
-}
+});
 
+startBtn.addEventListener("click", () => {
+  unlockAudioContext();
+  startMedia();
+});
+
+muteBtn.addEventListener("click", toggleMute);
+
+/* UI */
 function showMedia() {
   document.getElementById("joinSection").style.display = "none";
   document.getElementById("mediaSection").style.display = "block";
 }
 
-/* 🎯 START MEDIA (FINAL MOBILE-SAFE VERSION) */
+/* MEDIA */
 function startMedia() {
   navigator.mediaDevices.getUserMedia({
     video: { facingMode: "user" },
-    audio: { echoCancellation: true, noiseSuppression: true }
+    audio: true
   }).then(stream => {
     localStream = stream;
-
-    /* Force mic ON (iOS fix) */
-    localStream.getAudioTracks().forEach(t => t.enabled = true);
-
-    /* Local video */
-    localVideo.muted = true;
     localVideo.srcObject = stream;
-    localVideo.play().catch(() => {});
+    localVideo.muted = true;
+    localVideo.play();
 
     document.getElementById("mediaSection").style.display = "none";
     document.getElementById("videoSection").style.display = "flex";
@@ -74,47 +66,28 @@ function startMedia() {
 
     socket.emit("join-room", roomId);
     createPeer();
-
-    if (isHost) {
-      document.getElementById("dashboard").style.display = "block";
-      initChart();
-    }
-
-    startEmotionDetection();
-  }).catch(err => {
-    alert("Camera & microphone permission required");
-    console.error(err);
   });
 }
 
-/* WebRTC */
+/* WEBRTC */
 function createPeer() {
   peer = new RTCPeerConnection({
     iceServers: [{ urls: "stun:stun.l.google.com:19302" }]
   });
 
-  localStream.getTracks().forEach(track =>
-    peer.addTrack(track, localStream)
-  );
+  localStream.getTracks().forEach(t => peer.addTrack(t, localStream));
 
   peer.ontrack = e => {
     const stream = e.streams[0];
-
-    /* Video (muted autoplay-safe) */
     remoteVideo.srcObject = stream;
     remoteVideo.muted = true;
-    remoteVideo.play().catch(() => {});
-
-    /* Audio (separate element — mobile safe) */
+    remoteVideo.play();
     remoteAudio.srcObject = stream;
-    remoteAudio.muted = false;
-    remoteAudio.play().catch(() => {});
+    remoteAudio.play();
   };
 
   peer.onicecandidate = e => {
-    if (e.candidate) {
-      socket.emit("ice-candidate", { roomId, candidate: e.candidate });
-    }
+    if (e.candidate) socket.emit("ice-candidate", { roomId, candidate: e.candidate });
   };
 }
 
@@ -134,54 +107,11 @@ socket.on("offer", async offer => {
 socket.on("answer", ans => peer.setRemoteDescription(ans));
 socket.on("ice-candidate", c => peer.addIceCandidate(c));
 
-/* Mute */
 function toggleMute() {
   const track = localStream.getAudioTracks()[0];
   track.enabled = !track.enabled;
 }
 
-/* Emotion detection */
-function startEmotionDetection() {
-  setInterval(async () => {
-    const det = await faceapi
-      .detectSingleFace(localVideo, new faceapi.TinyFaceDetectorOptions())
-      .withFaceExpressions();
-
-    if (det) {
-      const emotion = Object.keys(det.expressions)
-        .reduce((a, b) => det.expressions[a] > det.expressions[b] ? a : b);
-
-      socket.emit("emotion", { roomId, emotion });
-    }
-  }, 6000);
-}
-
-/* Dashboard */
-socket.on("emotion-update", e => {
-  if (!isHost) return;
-  emotions[e]++;
-  updateDashboard();
-});
-
-function initChart() {
-  chart = new Chart(document.getElementById("emotionChart"), {
-    type: "pie",
-    data: {
-      labels: Object.keys(emotions),
-      datasets: [{ data: Object.values(emotions) }]
-    }
-  });
-}
-
-function updateDashboard() {
-  for (let e in emotions) {
-    document.getElementById(e).innerText = emotions[e];
-  }
-  chart.data.datasets[0].data = Object.values(emotions);
-  chart.update();
-}
-
-}
 
 
 

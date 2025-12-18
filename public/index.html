@@ -59,15 +59,14 @@
 <h1>MoodSync Meet</h1>
 
 <div class="card" id="joinSection">
-  <button onclick="hostMeeting()">Host Meeting</button><br><br>
+  <button id="hostBtn">Host Meeting</button><br><br>
   <input id="roomInput" placeholder="Meeting Code">
-  <button onclick="joinMeeting()">Join</button>
+  <button id="joinBtn">Join</button>
 </div>
 
 <div class="card" id="mediaSection" style="display:none;">
   <h3>Enable Camera & Microphone</h3>
-  <!-- 🔑 USER GESTURE UNLOCK -->
-  <button onclick="unlockAudioContext(); startMedia();">Start</button>
+  <button id="startBtn">Start</button>
 </div>
 
 <div class="videos" id="videoSection">
@@ -75,11 +74,10 @@
   <video id="remoteVideo" playsinline></video>
 </div>
 
-<!-- 🔊 Separate audio element (required on mobile) -->
 <audio id="remoteAudio" autoplay playsinline></audio>
 
 <div class="card" id="controls" style="display:none;">
-  <button onclick="toggleMute()">Mute / Unmute</button>
+  <button id="muteBtn">Mute / Unmute</button>
 </div>
 
 <div class="card dashboard" id="dashboard">
@@ -101,6 +99,7 @@
 
 </body>
 </html>
+
 
 
 
