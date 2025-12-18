@@ -76,6 +76,11 @@
   <video id="remoteVideo" playsinline></video>
 </div>
 
+<!-- 📱 MOBILE PLAY BUTTON -->
+<div class="card" id="mobilePlay" style="display:none;">
+  <button onclick="enableRemotePlayback()">Tap to Enable Audio / Video</button>
+</div>
+
 <div class="card" id="controls" style="display:none;">
   <button onclick="toggleMute()">Mute / Unmute</button>
 </div>
@@ -87,6 +92,9 @@
   <p>😐 Neutral: <span id="neutral">0</span></p>
   <p>😢 Sad: <span id="sad">0</span></p>
   <p>😡 Angry: <span id="angry">0</span></p>
+  <p>😲 Surprised: <span id="surprised">0</span></p>
+  <p>😨 Fearful: <span id="fearful">0</span></p>
+  <p>🤢 Disgusted: <span id="disgusted">0</span></p>
 
   <div class="chart-container">
     <canvas id="emotionChart"></canvas>
