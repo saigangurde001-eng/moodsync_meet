@@ -1,18 +1,26 @@
 const socket = io();
 
-/* ✅ LOAD FACE-API MODELS (THIS WAS THE MISSING PART) */
+/* Load Face API models */
 Promise.all([
   faceapi.nets.tinyFaceDetector.loadFromUri("/models"),
   faceapi.nets.faceExpressionNet.loadFromUri("/models")
 ]).then(() => {
-  console.log("✅ FaceAPI models loaded");
+  console.log("FaceAPI models loaded");
 });
 
 let localStream, peer, roomId, chart;
 let isHost = false;
 let userName = "";
 
-const emotions = { happy: 0, neutral: 0, sad: 0, angry: 0 };
+/* UPDATED emotions */
+const emotions = {
+  happy: 0,
+  neutral: 0,
+  sad: 0,
+  angry: 0,
+  surprised: 0,
+  disgusted: 0
+};
 
 const localVideo = document.getElementById("localVideo");
 const remoteVideo = document.getElementById("remoteVideo");
@@ -53,7 +61,7 @@ function showMedia() {
   mediaSection.style.display = "block";
 }
 
-/* MEDIA */
+/* Media */
 function startMedia() {
   navigator.mediaDevices.getUserMedia({ video: true, audio: true })
     .then(stream => {
@@ -76,13 +84,15 @@ function startMedia() {
     });
 }
 
-/* WEBRTC */
+/* WebRTC */
 function createPeer() {
   peer = new RTCPeerConnection({
     iceServers: [{ urls: "stun:stun.l.google.com:19302" }]
   });
 
-  localStream.getTracks().forEach(track => peer.addTrack(track, localStream));
+  localStream.getTracks().forEach(track =>
+    peer.addTrack(track, localStream)
+  );
 
   peer.ontrack = e => {
     remoteVideo.srcObject = e.streams[0];
@@ -98,7 +108,7 @@ function createPeer() {
   };
 }
 
-/* SIGNALING */
+/* Signaling */
 socket.on("ready", async () => {
   const offer = await peer.createOffer();
   await peer.setLocalDescription(offer);
@@ -115,7 +125,7 @@ socket.on("offer", async offer => {
 socket.on("answer", ans => peer.setRemoteDescription(ans));
 socket.on("ice-candidate", c => peer.addIceCandidate(c));
 
-/* 🎭 EMOTION DETECTION (FINAL, WORKING) */
+/* Emotion Detection */
 function startEmotionDetection() {
   const emotionVideo = document.createElement("video");
   emotionVideo.srcObject = localStream;
@@ -135,15 +145,17 @@ function startEmotionDetection() {
 
     const expressions = result.expressions;
     const emotion = Object.keys(expressions)
-      .reduce((a, b) => expressions[a] > expressions[b] ? a : b);
+      .reduce((a, b) =>
+        expressions[a] > expressions[b] ? a : b
+      );
 
     socket.emit("emotion", { roomId, emotion });
   }, 5000);
 }
 
-/* DASHBOARD */
+/* Dashboard */
 socket.on("emotion-update", emotion => {
-  if (!isHost) return;
+  if (!isHost || !emotions.hasOwnProperty(emotion)) return;
   emotions[emotion]++;
   updateDashboard();
 });
@@ -153,7 +165,9 @@ function initChart() {
     type: "pie",
     data: {
       labels: Object.keys(emotions),
-      datasets: [{ data: Object.values(emotions) }]
+      datasets: [{
+        data: Object.values(emotions)
+      }]
     }
   });
 }
@@ -165,6 +179,7 @@ function updateDashboard() {
   chart.data.datasets[0].data = Object.values(emotions);
   chart.update();
 }
+
 
 
 
