@@ -4,6 +4,8 @@
   <meta charset="UTF-8" />
   <title>MoodSync Meet</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+  <!-- External CSS -->
   <link rel="stylesheet" href="/style.css">
 </head>
 
@@ -26,12 +28,17 @@
     <button id="startBtn">Start Camera & Mic</button>
   </div>
 
-  <!-- VIDEO -->
+  <!-- VIDEO SECTION -->
   <div class="card" id="videoSection">
+    <div class="video-header">
+      <button id="fullscreenBtn">⛶ Fullscreen</button>
+    </div>
+
     <video id="localVideo" autoplay muted playsinline></video>
     <video id="remoteVideo" autoplay playsinline></video>
   </div>
 
+  <!-- AUDIO -->
   <audio id="remoteAudio" autoplay playsinline></audio>
 
   <!-- HOST DASHBOARD -->
@@ -53,15 +60,16 @@
 
     <p>
       Overall Mood:
-      <b><span id="overallMood">Neutral</span></b>
+      <b><span id="overallMood">Neutral 😐</span></b>
     </p>
 
     <p>
       Engagement Level:
-      <b><span id="engagementLevel">Medium</span></b>
+      <b><span id="engagementLevel">Medium 🙂</span></b>
     </p>
   </div>
 
+  <!-- Scripts -->
   <script src="/socket.io/socket.io.js"></script>
   <script src="https://unpkg.com/face-api.js@0.22.2/dist/face-api.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -69,4 +77,3 @@
 
 </body>
 </html>
-

@@ -22,7 +22,7 @@ const emotions = {
   disgusted: 0
 };
 
-/* DOM */
+/* DOM elements */
 const joinSection = document.getElementById("joinSection");
 const mediaSection = document.getElementById("mediaSection");
 const videoSection = document.getElementById("videoSection");
@@ -36,10 +36,12 @@ const emotionChartCanvas = document.getElementById("emotionChart");
 const hostBtn = document.getElementById("hostBtn");
 const joinBtn = document.getElementById("joinBtn");
 const startBtn = document.getElementById("startBtn");
+const fullscreenBtn = document.getElementById("fullscreenBtn");
+
 const nameInput = document.getElementById("nameInput");
 const roomInput = document.getElementById("roomInput");
 
-/* UI */
+/* UI actions */
 hostBtn.onclick = () => {
   userName = nameInput.value.trim();
   if (!userName) return alert("Enter name");
@@ -128,7 +130,7 @@ socket.on("offer", async offer => {
 socket.on("answer", ans => peer.setRemoteDescription(ans));
 socket.on("ice-candidate", c => peer.addIceCandidate(c));
 
-/* Emotion Detection */
+/* Emotion detection */
 function startEmotionDetection() {
   const emotionVideo = document.createElement("video");
   emotionVideo.srcObject = localStream;
@@ -148,9 +150,7 @@ function startEmotionDetection() {
 
     const expressions = result.expressions;
     const emotion = Object.keys(expressions)
-      .reduce((a, b) =>
-        expressions[a] > expressions[b] ? a : b
-      );
+      .reduce((a, b) => expressions[a] > expressions[b] ? a : b);
 
     socket.emit("emotion", { roomId, emotion });
   }, 5000);
@@ -162,7 +162,7 @@ socket.on("emotion-update", emotion => {
 
   emotions[emotion]++;
   updateDashboard();
-  updateMeetingSummary(); // ✅ NEW
+  updateMeetingSummary();
 });
 
 function initChart() {
@@ -183,7 +183,7 @@ function updateDashboard() {
   chart.update();
 }
 
-/* 🧠 Meeting Summary */
+/* Meeting summary */
 function updateMeetingSummary() {
   const positive = emotions.happy + emotions.surprised;
   const negative = emotions.sad + emotions.angry + emotions.disgusted;
@@ -202,3 +202,14 @@ function updateMeetingSummary() {
 
   document.getElementById("engagementLevel").innerText = engagement;
 }
+
+/* Fullscreen toggle */
+fullscreenBtn.onclick = () => {
+  if (!document.fullscreenElement) {
+    videoSection.requestFullscreen();
+    fullscreenBtn.innerText = "⛶ Exit Fullscreen";
+  } else {
+    document.exitFullscreen();
+    fullscreenBtn.innerText = "⛶ Fullscreen";
+  }
+};
