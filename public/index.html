@@ -3,10 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <title>MoodSync Meet</title>
-
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-
-  <!-- ✅ External CSS -->
   <link rel="stylesheet" href="/style.css">
 </head>
 
@@ -29,13 +26,12 @@
     <button id="startBtn">Start Camera & Mic</button>
   </div>
 
-  <!-- VIDEO SECTION -->
+  <!-- VIDEO -->
   <div class="card" id="videoSection">
     <video id="localVideo" autoplay muted playsinline></video>
     <video id="remoteVideo" autoplay playsinline></video>
   </div>
 
-  <!-- AUDIO -->
   <audio id="remoteAudio" autoplay playsinline></audio>
 
   <!-- HOST DASHBOARD -->
@@ -47,12 +43,25 @@
     😢 Sad: <span id="sad">0</span><br />
     😡 Angry: <span id="angry">0</span><br />
     😲 Surprised: <span id="surprised">0</span><br />
-    🤢 Disgusted: <span id="disgusted">0</span><br />
+    🤢 Disgusted: <span id="disgusted">0</span><br /><br />
 
     <canvas id="emotionChart" width="250" height="250"></canvas>
+
+    <hr>
+
+    <h3>Meeting Summary</h3>
+
+    <p>
+      Overall Mood:
+      <b><span id="overallMood">Neutral</span></b>
+    </p>
+
+    <p>
+      Engagement Level:
+      <b><span id="engagementLevel">Medium</span></b>
+    </p>
   </div>
 
-  <!-- SCRIPTS -->
   <script src="/socket.io/socket.io.js"></script>
   <script src="https://unpkg.com/face-api.js@0.22.2/dist/face-api.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -60,3 +69,4 @@
 
 </body>
 </html>
+

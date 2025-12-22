@@ -12,7 +12,7 @@ let localStream, peer, roomId, chart;
 let isHost = false;
 let userName = "";
 
-/* UPDATED emotions */
+/* Emotion counters */
 const emotions = {
   happy: 0,
   neutral: 0,
@@ -22,16 +22,22 @@ const emotions = {
   disgusted: 0
 };
 
+/* DOM */
+const joinSection = document.getElementById("joinSection");
+const mediaSection = document.getElementById("mediaSection");
+const videoSection = document.getElementById("videoSection");
+const dashboard = document.getElementById("dashboard");
+
 const localVideo = document.getElementById("localVideo");
 const remoteVideo = document.getElementById("remoteVideo");
 const remoteAudio = document.getElementById("remoteAudio");
-const dashboard = document.getElementById("dashboard");
 const emotionChartCanvas = document.getElementById("emotionChart");
 
 const hostBtn = document.getElementById("hostBtn");
 const joinBtn = document.getElementById("joinBtn");
 const startBtn = document.getElementById("startBtn");
 const nameInput = document.getElementById("nameInput");
+const roomInput = document.getElementById("roomInput");
 
 /* UI */
 hostBtn.onclick = () => {
@@ -41,25 +47,21 @@ hostBtn.onclick = () => {
   isHost = true;
   roomId = Math.random().toString(36).substring(2, 8).toUpperCase();
   alert("Meeting Code: " + roomId);
-  showMedia();
+
+  joinSection.style.display = "none";
+  mediaSection.style.display = "block";
 };
 
 joinBtn.onclick = () => {
   userName = nameInput.value.trim();
-  if (!userName) return alert("Enter name");
+  roomId = roomInput.value.trim().toUpperCase();
+  if (!userName || !roomId) return alert("Enter name & code");
 
-  roomId = document.getElementById("roomInput").value.trim().toUpperCase();
-  if (!roomId) return alert("Enter meeting code");
-
-  showMedia();
+  joinSection.style.display = "none";
+  mediaSection.style.display = "block";
 };
 
 startBtn.onclick = startMedia;
-
-function showMedia() {
-  joinSection.style.display = "none";
-  mediaSection.style.display = "block";
-}
 
 /* Media */
 function startMedia() {
@@ -73,6 +75,7 @@ function startMedia() {
       videoSection.style.display = "block";
 
       socket.emit("join-room", { roomId, name: userName, isHost });
+
       createPeer();
 
       if (isHost) {
@@ -156,8 +159,10 @@ function startEmotionDetection() {
 /* Dashboard */
 socket.on("emotion-update", emotion => {
   if (!isHost || !emotions.hasOwnProperty(emotion)) return;
+
   emotions[emotion]++;
   updateDashboard();
+  updateMeetingSummary(); // ✅ NEW
 });
 
 function initChart() {
@@ -165,9 +170,7 @@ function initChart() {
     type: "pie",
     data: {
       labels: Object.keys(emotions),
-      datasets: [{
-        data: Object.values(emotions)
-      }]
+      datasets: [{ data: Object.values(emotions) }]
     }
   });
 }
@@ -180,30 +183,22 @@ function updateDashboard() {
   chart.update();
 }
 
+/* 🧠 Meeting Summary */
+function updateMeetingSummary() {
+  const positive = emotions.happy + emotions.surprised;
+  const negative = emotions.sad + emotions.angry + emotions.disgusted;
+  const neutral = emotions.neutral;
 
+  let mood = "Neutral 😐";
+  if (positive > negative && positive > neutral) mood = "Positive 🙂";
+  else if (negative > positive && negative > neutral) mood = "Negative 😕";
 
+  document.getElementById("overallMood").innerText = mood;
 
+  const total = positive + negative + neutral;
+  let engagement = "Low 😴";
+  if (total > 25) engagement = "High 🔥";
+  else if (total > 10) engagement = "Medium 🙂";
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+  document.getElementById("engagementLevel").innerText = engagement;
+}
