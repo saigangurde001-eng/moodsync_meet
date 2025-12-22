@@ -23,8 +23,8 @@ p {
   background: #ffffff;
   padding: 16px;
   margin: 16px auto;
-  width: 90%;
-  max-width: 500px;
+  width: 95%;
+  max-width: 800px;
   border-radius: 10px;
   box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
 }
@@ -56,18 +56,30 @@ button:hover {
   background: #4338ca;
 }
 
+/* 🎥 VIDEO SECTION */
 #videoSection {
   display: none;
-  gap: 10px;
+  gap: 16px;
   justify-content: center;
+  align-items: center;
   flex-wrap: wrap;
 }
 
+/* 🔥 Bigger camera screens */
 video {
-  width: 45%;
-  max-width: 320px;
+  width: 48%;
+  max-width: 420px;
+  height: auto;
   background: black;
-  border-radius: 8px;
+  border-radius: 12px;
+}
+
+/* 📱 Mobile view */
+@media (max-width: 768px) {
+  video {
+    width: 95%;
+    max-width: none;
+  }
 }
 
 #emotionChart {
