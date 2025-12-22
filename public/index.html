@@ -1,64 +1,62 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-  <meta charset="UTF-8">
+  <meta charset="UTF-8" />
   <title>MoodSync Meet</title>
 
-  <style>
-    body {
-      font-family: Arial;
-      text-align: center;
-    }
-    #emotionChart {
-      max-width: 250px;
-      max-height: 250px;
-      margin: auto;
-    }
-  </style>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+  <!-- ✅ External CSS -->
+  <link rel="stylesheet" href="/style.css">
 </head>
 
 <body>
 
-<h1>MoodSync Meet</h1>
+  <h1>MoodSync Meet</h1>
+  <p>Emotion-aware online meeting</p>
 
-<div id="joinSection">
-  <input id="nameInput" placeholder="Your Name"><br><br>
+  <!-- JOIN / HOST -->
+  <div class="card" id="joinSection">
+    <input id="nameInput" placeholder="Your Name" />
+    <button id="hostBtn">Host Meeting</button>
 
-  <button id="hostBtn">Host</button><br><br>
+    <input id="roomInput" placeholder="Meeting Code" />
+    <button id="joinBtn">Join Meeting</button>
+  </div>
 
-  <input id="roomInput" placeholder="Meeting Code">
-  <button id="joinBtn">Join</button>
-</div>
+  <!-- START MEDIA -->
+  <div class="card" id="mediaSection" style="display:none;">
+    <button id="startBtn">Start Camera & Mic</button>
+  </div>
 
-<div id="mediaSection" style="display:none;">
-  <button id="startBtn">Start</button>
-</div>
+  <!-- VIDEO SECTION -->
+  <div class="card" id="videoSection">
+    <video id="localVideo" autoplay muted playsinline></video>
+    <video id="remoteVideo" autoplay playsinline></video>
+  </div>
 
-<div id="videoSection" style="display:none;">
-  <video id="localVideo" autoplay muted playsinline></video>
-  <video id="remoteVideo" autoplay playsinline></video>
-</div>
+  <!-- AUDIO -->
+  <audio id="remoteAudio" autoplay playsinline></audio>
 
-<audio id="remoteAudio" autoplay></audio>
+  <!-- HOST DASHBOARD -->
+  <div class="card" id="dashboard" style="display:none;">
+    <h3>Emotion Dashboard (Host)</h3>
 
-<div id="dashboard" style="display:none;">
-  <h3>Emotion Dashboard (Host)</h3>
+    😊 Happy: <span id="happy">0</span><br />
+    😐 Neutral: <span id="neutral">0</span><br />
+    😢 Sad: <span id="sad">0</span><br />
+    😡 Angry: <span id="angry">0</span><br />
+    😲 Surprised: <span id="surprised">0</span><br />
+    🤢 Disgusted: <span id="disgusted">0</span><br />
 
-  😊 Happy: <span id="happy">0</span><br>
-  😐 Neutral: <span id="neutral">0</span><br>
-  😢 Sad: <span id="sad">0</span><br>
-  😡 Angry: <span id="angry">0</span><br>
-  😲 Surprised: <span id="surprised">0</span><br>
-  🤢 Disgusted: <span id="disgusted">0</span><br><br>
+    <canvas id="emotionChart" width="250" height="250"></canvas>
+  </div>
 
-  <canvas id="emotionChart" width="250" height="250"></canvas>
-</div>
-
-<script src="/socket.io/socket.io.js"></script>
-<script src="https://unpkg.com/face-api.js@0.22.2/dist/face-api.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-<script src="main.js"></script>
+  <!-- SCRIPTS -->
+  <script src="/socket.io/socket.io.js"></script>
+  <script src="https://unpkg.com/face-api.js@0.22.2/dist/face-api.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script src="/main.js"></script>
 
 </body>
 </html>
-
