@@ -27,7 +27,10 @@
 <div class="card" id="videoSection">
   <div class="video-header">
     <button id="fullscreenBtn">⛶ Fullscreen</button>
-    <button id="endMeetingBtn">🛑 End Meeting</button>
+    <!-- 🛑 END MEETING BUTTON (ADDED ONLY) -->
+    <button id="endMeetingBtn" style="background:#dc2626;margin-left:8px;">
+      🛑 End Meeting
+    </button>
   </div>
 
   <video id="localVideo" autoplay muted playsinline></video>
@@ -39,12 +42,12 @@
 <div class="card" id="dashboard" style="display:none;">
   <h3>Emotion Dashboard (Host)</h3>
 
-  😊 Happy: <span id="happy">0</span><br>
-  😐 Neutral: <span id="neutral">0</span><br>
-  😢 Sad: <span id="sad">0</span><br>
-  😡 Angry: <span id="angry">0</span><br>
-  😲 Surprised: <span id="surprised">0</span><br>
-  🤢 Disgusted: <span id="disgusted">0</span><br><br>
+  😊 Happy: <span id="happy">0</span><br />
+  😐 Neutral: <span id="neutral">0</span><br />
+  😢 Sad: <span id="sad">0</span><br />
+  😡 Angry: <span id="angry">0</span><br />
+  😲 Surprised: <span id="surprised">0</span><br />
+  🤢 Disgusted: <span id="disgusted">0</span><br /><br />
 
   <canvas id="emotionChart" width="250" height="250"></canvas>
 
@@ -52,7 +55,7 @@
 
   <h3>Meeting Summary</h3>
   <p>Overall Mood: <b><span id="overallMood">Neutral 😐</span></b></p>
-  <p>Engagement: <b><span id="engagementLevel">Medium 🙂</span></b></p>
+  <p>Engagement Level: <b><span id="engagementLevel">Medium 🙂</span></b></p>
 </div>
 
 <script src="/socket.io/socket.io.js"></script>
@@ -62,4 +65,3 @@
 
 </body>
 </html>
-

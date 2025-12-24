@@ -1,31 +1,23 @@
 const express = require("express");
 const http = require("http");
+const path = require("path");
 const { Server } = require("socket.io");
 
 const app = express();
 const server = http.createServer(app);
 const io = new Server(server);
 
-app.use(express.static("public"));
+app.use(express.static(path.join(__dirname, "public")));
 
-const roomParticipants = {};
+app.get("/", (req, res) => {
+  res.sendFile(path.join(__dirname, "public", "index.html"));
+});
 
-io.on("connection", socket => {
+io.on("connection", (socket) => {
   console.log("User connected:", socket.id);
 
-  socket.on("join-room", ({ roomId, name, isHost }) => {
+  socket.on("join-room", ({ roomId }) => {
     socket.join(roomId);
-
-    if (!roomParticipants[roomId]) {
-      roomParticipants[roomId] = {};
-    }
-
-    roomParticipants[roomId][socket.id] = { name, isHost };
-
-    io.to(roomId).emit(
-      "participants-update",
-      Object.values(roomParticipants[roomId])
-    );
 
     const clients = io.sockets.adapter.rooms.get(roomId);
     if (clients && clients.size > 1) {
@@ -33,12 +25,6 @@ io.on("connection", socket => {
     }
   });
 
-  // Emotion data
-  socket.on("emotion", ({ roomId, emotion }) => {
-    socket.to(roomId).emit("emotion-update", emotion);
-  });
-
-  // WebRTC signaling
   socket.on("offer", ({ roomId, offer }) => {
     socket.to(roomId).emit("offer", offer);
   });
@@ -51,16 +37,16 @@ io.on("connection", socket => {
     socket.to(roomId).emit("ice-candidate", candidate);
   });
 
+  socket.on("emotion", ({ roomId, emotion }) => {
+    socket.to(roomId).emit("emotion-update", emotion);
+  });
+
+  /* 🛑 END MEETING (ADDED ONLY) */
+  socket.on("end-meeting", ({ roomId }) => {
+    io.to(roomId).emit("meeting-ended");
+  });
+
   socket.on("disconnect", () => {
-    for (const roomId in roomParticipants) {
-      if (roomParticipants[roomId][socket.id]) {
-        delete roomParticipants[roomId][socket.id];
-        io.to(roomId).emit(
-          "participants-update",
-          Object.values(roomParticipants[roomId])
-        );
-      }
-    }
     console.log("User disconnected:", socket.id);
   });
 });
@@ -69,7 +55,3 @@ const PORT = process.env.PORT || 3000;
 server.listen(PORT, () => {
   console.log("Server running on port", PORT);
 });
-
-
-
-
