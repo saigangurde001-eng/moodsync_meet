@@ -12,17 +12,13 @@ io.on("connection", (socket) => {
   socket.on("join-room", ({ roomId }) => {
     socket.join(roomId);
 
-    // DEMO emotion stream (replace with real detection if needed)
     setInterval(() => {
       const emotions = [
         "happy","neutral","sad",
         "angry","surprised","disgusted","fearful"
       ];
-      const randomEmotion =
-        emotions[Math.floor(Math.random() * emotions.length)];
-
-      socket.to(roomId).emit("emotionUpdate", randomEmotion);
-      socket.emit("emotionUpdate", randomEmotion);
+      const emotion = emotions[Math.floor(Math.random() * emotions.length)];
+      io.to(roomId).emit("emotionUpdate", emotion);
     }, 3000);
   });
 });
