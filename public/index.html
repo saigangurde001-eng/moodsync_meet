@@ -4,76 +4,62 @@
   <meta charset="UTF-8" />
   <title>MoodSync Meet</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-
-  <!-- External CSS -->
   <link rel="stylesheet" href="/style.css">
 </head>
 
 <body>
 
-  <h1>MoodSync Meet</h1>
-  <p>Emotion-aware online meeting</p>
+<h1>MoodSync Meet</h1>
+<p>Emotion-aware online meeting</p>
 
-  <!-- JOIN / HOST -->
-  <div class="card" id="joinSection">
-    <input id="nameInput" placeholder="Your Name" />
-    <button id="hostBtn">Host Meeting</button>
+<div class="card" id="joinSection">
+  <input id="nameInput" placeholder="Your Name" />
+  <button id="hostBtn">Host Meeting</button>
 
-    <input id="roomInput" placeholder="Meeting Code" />
-    <button id="joinBtn">Join Meeting</button>
+  <input id="roomInput" placeholder="Meeting Code" />
+  <button id="joinBtn">Join Meeting</button>
+</div>
+
+<div class="card" id="mediaSection" style="display:none;">
+  <button id="startBtn">Start Camera & Mic</button>
+</div>
+
+<div class="card" id="videoSection">
+  <div class="video-header">
+    <button id="fullscreenBtn">⛶ Fullscreen</button>
+    <button id="endMeetingBtn">🛑 End Meeting</button>
   </div>
 
-  <!-- START MEDIA -->
-  <div class="card" id="mediaSection" style="display:none;">
-    <button id="startBtn">Start Camera & Mic</button>
-  </div>
+  <video id="localVideo" autoplay muted playsinline></video>
+  <video id="remoteVideo" autoplay playsinline></video>
+</div>
 
-  <!-- VIDEO SECTION -->
-  <div class="card" id="videoSection">
-    <div class="video-header">
-      <button id="fullscreenBtn">⛶ Fullscreen</button>
-    </div>
+<audio id="remoteAudio" autoplay></audio>
 
-    <video id="localVideo" autoplay muted playsinline></video>
-    <video id="remoteVideo" autoplay playsinline></video>
-  </div>
+<div class="card" id="dashboard" style="display:none;">
+  <h3>Emotion Dashboard (Host)</h3>
 
-  <!-- AUDIO -->
-  <audio id="remoteAudio" autoplay playsinline></audio>
+  😊 Happy: <span id="happy">0</span><br>
+  😐 Neutral: <span id="neutral">0</span><br>
+  😢 Sad: <span id="sad">0</span><br>
+  😡 Angry: <span id="angry">0</span><br>
+  😲 Surprised: <span id="surprised">0</span><br>
+  🤢 Disgusted: <span id="disgusted">0</span><br><br>
 
-  <!-- HOST DASHBOARD -->
-  <div class="card" id="dashboard" style="display:none;">
-    <h3>Emotion Dashboard (Host)</h3>
+  <canvas id="emotionChart" width="250" height="250"></canvas>
 
-    😊 Happy: <span id="happy">0</span><br />
-    😐 Neutral: <span id="neutral">0</span><br />
-    😢 Sad: <span id="sad">0</span><br />
-    😡 Angry: <span id="angry">0</span><br />
-    😲 Surprised: <span id="surprised">0</span><br />
-    🤢 Disgusted: <span id="disgusted">0</span><br /><br />
+  <hr>
 
-    <canvas id="emotionChart" width="250" height="250"></canvas>
+  <h3>Meeting Summary</h3>
+  <p>Overall Mood: <b><span id="overallMood">Neutral 😐</span></b></p>
+  <p>Engagement: <b><span id="engagementLevel">Medium 🙂</span></b></p>
+</div>
 
-    <hr>
-
-    <h3>Meeting Summary</h3>
-
-    <p>
-      Overall Mood:
-      <b><span id="overallMood">Neutral 😐</span></b>
-    </p>
-
-    <p>
-      Engagement Level:
-      <b><span id="engagementLevel">Medium 🙂</span></b>
-    </p>
-  </div>
-
-  <!-- Scripts -->
-  <script src="/socket.io/socket.io.js"></script>
-  <script src="https://unpkg.com/face-api.js@0.22.2/dist/face-api.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-  <script src="/main.js"></script>
+<script src="/socket.io/socket.io.js"></script>
+<script src="https://unpkg.com/face-api.js@0.22.2/dist/face-api.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script src="/main.js"></script>
 
 </body>
 </html>
+
