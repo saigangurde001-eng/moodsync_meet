@@ -1,118 +1,215 @@
 const socket = io();
 
-window.addEventListener("DOMContentLoaded", () => {
+/* Load Face API models */
+Promise.all([
+  faceapi.nets.tinyFaceDetector.loadFromUri("/models"),
+  faceapi.nets.faceExpressionNet.loadFromUri("/models")
+]).then(() => {
+  console.log("FaceAPI models loaded");
+});
 
-  const joinScreen = document.getElementById("joinScreen");
-  const meetingScreen = document.getElementById("meetingScreen");
+let localStream, peer, roomId, chart;
+let isHost = false;
+let userName = "";
 
-  const hostBtn = document.getElementById("hostBtn");
-  const joinBtn = document.getElementById("joinBtn");
-  const endMeetingBtn = document.getElementById("endMeetingBtn");
-  const fullscreenBtn = document.getElementById("fullscreenBtn");
+/* Emotion counters */
+const emotions = {
+  happy: 0,
+  neutral: 0,
+  sad: 0,
+  angry: 0,
+  surprised: 0,
+  disgusted: 0
+};
 
-  const usernameInput = document.getElementById("username");
-  const roomInput = document.getElementById("roomId");
-  const meetingCodeDisplay = document.getElementById("meetingCodeDisplay");
+/* DOM elements */
+const joinSection = document.getElementById("joinSection");
+const mediaSection = document.getElementById("mediaSection");
+const videoSection = document.getElementById("videoSection");
+const dashboard = document.getElementById("dashboard");
 
-  const video = document.getElementById("video");
-  const emotionText = document.getElementById("emotionText");
-  const overallMoodText = document.getElementById("overallMood");
+const localVideo = document.getElementById("localVideo");
+const remoteVideo = document.getElementById("remoteVideo");
+const remoteAudio = document.getElementById("remoteAudio");
+const emotionChartCanvas = document.getElementById("emotionChart");
 
-  const emotions = {
-    happy: 0,
-    neutral: 0,
-    sad: 0,
-    angry: 0,
-    surprised: 0,
-    disgusted: 0,
-    fearful: 0
+const hostBtn = document.getElementById("hostBtn");
+const joinBtn = document.getElementById("joinBtn");
+const startBtn = document.getElementById("startBtn");
+const fullscreenBtn = document.getElementById("fullscreenBtn");
+
+const nameInput = document.getElementById("nameInput");
+const roomInput = document.getElementById("roomInput");
+
+/* UI actions */
+hostBtn.onclick = () => {
+  userName = nameInput.value.trim();
+  if (!userName) return alert("Enter name");
+
+  isHost = true;
+  roomId = Math.random().toString(36).substring(2, 8).toUpperCase();
+  alert("Meeting Code: " + roomId);
+
+  joinSection.style.display = "none";
+  mediaSection.style.display = "block";
+};
+
+joinBtn.onclick = () => {
+  userName = nameInput.value.trim();
+  roomId = roomInput.value.trim().toUpperCase();
+  if (!userName || !roomId) return alert("Enter name & code");
+
+  joinSection.style.display = "none";
+  mediaSection.style.display = "block";
+};
+
+startBtn.onclick = startMedia;
+
+/* Media */
+function startMedia() {
+  navigator.mediaDevices.getUserMedia({ video: true, audio: true })
+    .then(stream => {
+      localStream = stream;
+      localVideo.srcObject = stream;
+      localVideo.play();
+
+      mediaSection.style.display = "none";
+      videoSection.style.display = "block";
+
+      socket.emit("join-room", { roomId, name: userName, isHost });
+
+      createPeer();
+
+      if (isHost) {
+        dashboard.style.display = "block";
+        initChart();
+      }
+
+      startEmotionDetection();
+    });
+}
+
+/* WebRTC */
+function createPeer() {
+  peer = new RTCPeerConnection({
+    iceServers: [{ urls: "stun:stun.l.google.com:19302" }]
+  });
+
+  localStream.getTracks().forEach(track =>
+    peer.addTrack(track, localStream)
+  );
+
+  peer.ontrack = e => {
+    remoteVideo.srcObject = e.streams[0];
+    remoteVideo.play();
+    remoteAudio.srcObject = e.streams[0];
+    remoteAudio.play();
   };
 
-  let localStream = null;
-  let emotionChart;
-
-  // Initial state
-  joinScreen.style.display = "flex";
-  meetingScreen.style.display = "none";
-
-  async function startMeeting(isHost) {
-    console.log("Host/Join clicked", isHost);
-
-    const username = usernameInput.value.trim();
-    const roomId = roomInput.value.trim();
-
-    if (!username || !roomId) {
-      alert("Enter name and meeting code");
-      return;
+  peer.onicecandidate = e => {
+    if (e.candidate) {
+      socket.emit("ice-candidate", { roomId, candidate: e.candidate });
     }
+  };
+}
 
-    joinScreen.style.display = "none";
-    meetingScreen.style.display = "block";
-    meetingCodeDisplay.innerText = `Meeting: ${roomId}`;
-
-    socket.emit("join-room", { roomId, username, isHost });
-
-    localStream = await navigator.mediaDevices.getUserMedia({ video: true });
-    video.srcObject = localStream;
-
-    initChart();
-  }
-
-  hostBtn.addEventListener("click", () => startMeeting(true));
-  joinBtn.addEventListener("click", () => startMeeting(false));
-
-  socket.on("emotionUpdate", (emotion) => {
-    if (!emotions[emotion]) emotions[emotion] = 0;
-    emotions[emotion]++;
-    document.getElementById(`${emotion}Count`).innerText = emotions[emotion];
-    emotionText.innerText = emotion;
-    updateChart();
-    updateOverallMood();
-  });
-
-  function initChart() {
-    const ctx = document.getElementById("emotionChart");
-    emotionChart = new Chart(ctx, {
-      type: "pie",
-      data: {
-        labels: Object.keys(emotions),
-        datasets: [{ data: Object.values(emotions) }]
-      }
-    });
-  }
-
-  function updateChart() {
-    emotionChart.data.datasets[0].data = Object.values(emotions);
-    emotionChart.update();
-  }
-
-  function updateOverallMood() {
-    let max = "neutral";
-    for (let e in emotions) {
-      if (emotions[e] > emotions[max]) max = e;
-    }
-    overallMoodText.innerText =
-      max === "happy" || max === "surprised"
-        ? "Engaging 😊"
-        : max === "neutral"
-        ? "Neutral 😐"
-        : "Low Engagement 😴";
-  }
-
-  fullscreenBtn.addEventListener("click", () => {
-    if (!document.fullscreenElement) {
-      document.documentElement.requestFullscreen();
-    } else {
-      document.exitFullscreen();
-    }
-  });
-
-  endMeetingBtn.addEventListener("click", () => {
-    if (localStream) {
-      localStream.getTracks().forEach(t => t.stop());
-    }
-    socket.disconnect();
-    location.reload();
-  });
-
+/* Signaling */
+socket.on("ready", async () => {
+  const offer = await peer.createOffer();
+  await peer.setLocalDescription(offer);
+  socket.emit("offer", { roomId, offer });
 });
+
+socket.on("offer", async offer => {
+  await peer.setRemoteDescription(offer);
+  const answer = await peer.createAnswer();
+  await peer.setLocalDescription(answer);
+  socket.emit("answer", { roomId, answer });
+});
+
+socket.on("answer", ans => peer.setRemoteDescription(ans));
+socket.on("ice-candidate", c => peer.addIceCandidate(c));
+
+/* Emotion detection */
+function startEmotionDetection() {
+  const emotionVideo = document.createElement("video");
+  emotionVideo.srcObject = localStream;
+  emotionVideo.muted = true;
+  emotionVideo.playsInline = true;
+  emotionVideo.play();
+
+  setInterval(async () => {
+    const result = await faceapi
+      .detectSingleFace(
+        emotionVideo,
+        new faceapi.TinyFaceDetectorOptions()
+      )
+      .withFaceExpressions();
+
+    if (!result) return;
+
+    const expressions = result.expressions;
+    const emotion = Object.keys(expressions)
+      .reduce((a, b) => expressions[a] > expressions[b] ? a : b);
+
+    socket.emit("emotion", { roomId, emotion });
+  }, 5000);
+}
+
+/* Dashboard */
+socket.on("emotion-update", emotion => {
+  if (!isHost || !emotions.hasOwnProperty(emotion)) return;
+
+  emotions[emotion]++;
+  updateDashboard();
+  updateMeetingSummary();
+});
+
+function initChart() {
+  chart = new Chart(emotionChartCanvas, {
+    type: "pie",
+    data: {
+      labels: Object.keys(emotions),
+      datasets: [{ data: Object.values(emotions) }]
+    }
+  });
+}
+
+function updateDashboard() {
+  for (let e in emotions) {
+    document.getElementById(e).innerText = emotions[e];
+  }
+  chart.data.datasets[0].data = Object.values(emotions);
+  chart.update();
+}
+
+/* Meeting summary */
+function updateMeetingSummary() {
+  const positive = emotions.happy + emotions.surprised;
+  const negative = emotions.sad + emotions.angry + emotions.disgusted;
+  const neutral = emotions.neutral;
+
+  let mood = "Neutral 😐";
+  if (positive > negative && positive > neutral) mood = "Positive 🙂";
+  else if (negative > positive && negative > neutral) mood = "Negative 😕";
+
+  document.getElementById("overallMood").innerText = mood;
+
+  const total = positive + negative + neutral;
+  let engagement = "Low 😴";
+  if (total > 25) engagement = "High 🔥";
+  else if (total > 10) engagement = "Medium 🙂";
+
+  document.getElementById("engagementLevel").innerText = engagement;
+}
+
+/* Fullscreen toggle */
+fullscreenBtn.onclick = () => {
+  if (!document.fullscreenElement) {
+    videoSection.requestFullscreen();
+    fullscreenBtn.innerText = "⛶ Exit Fullscreen";
+  } else {
+    document.exitFullscreen();
+    fullscreenBtn.innerText = "⛶ Fullscreen";
+  }
+};

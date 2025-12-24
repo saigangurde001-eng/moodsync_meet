@@ -2,66 +2,78 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <title>MoodSync</title>
-  <link rel="stylesheet" href="style.css" />
-  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <title>MoodSync Meet</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+  <!-- External CSS -->
+  <link rel="stylesheet" href="/style.css">
 </head>
+
 <body>
 
-<!-- JOIN SCREEN -->
-<div id="joinScreen" class="center">
-  <h1>MoodSync</h1>
-  <input id="username" placeholder="Your name" />
-  <input id="roomId" placeholder="Meeting code" />
+  <h1>MoodSync Meet</h1>
+  <p>Emotion-aware online meeting</p>
 
-  <div class="btn-group">
+  <!-- JOIN / HOST -->
+  <div class="card" id="joinSection">
+    <input id="nameInput" placeholder="Your Name" />
     <button id="hostBtn">Host Meeting</button>
+
+    <input id="roomInput" placeholder="Meeting Code" />
     <button id="joinBtn">Join Meeting</button>
   </div>
-</div>
 
-<!-- MEETING SCREEN -->
-<div id="meetingScreen">
-
-  <div class="top-bar">
-    <span id="meetingCodeDisplay"></span>
-    <div>
-      <button id="fullscreenBtn">Fullscreen</button>
-      <button id="endMeetingBtn" class="danger">End Meeting</button>
-    </div>
+  <!-- START MEDIA -->
+  <div class="card" id="mediaSection" style="display:none;">
+    <button id="startBtn">Start Camera & Mic</button>
   </div>
 
-  <div class="content">
-
-    <div class="video-box">
-      <video id="video" autoplay muted></video>
-      <p id="speakerName">Speaking: You</p>
+  <!-- VIDEO SECTION -->
+  <div class="card" id="videoSection">
+    <div class="video-header">
+      <button id="fullscreenBtn">⛶ Fullscreen</button>
     </div>
 
-    <div id="analytics">
-      <h3>Live Emotions</h3>
-
-      <p>Current Emotion: <strong id="emotionText">--</strong></p>
-
-      <ul>
-        <li>😊 Happy: <span id="happyCount">0</span></li>
-        <li>😐 Neutral: <span id="neutralCount">0</span></li>
-        <li>😢 Sad: <span id="sadCount">0</span></li>
-        <li>😠 Angry: <span id="angryCount">0</span></li>
-        <li>😲 Surprised: <span id="surprisedCount">0</span></li>
-        <li>🤢 Disgusted: <span id="disgustedCount">0</span></li>
-        <li>😨 Fearful: <span id="fearfulCount">0</span></li>
-      </ul>
-
-      <canvas id="emotionChart"></canvas>
-
-      <p>Overall Mood: <strong id="overallMood">--</strong></p>
-    </div>
-
+    <video id="localVideo" autoplay muted playsinline></video>
+    <video id="remoteVideo" autoplay playsinline></video>
   </div>
-</div>
 
-<script src="/socket.io/socket.io.js"></script>
-<script src="script.js"></script>
+  <!-- AUDIO -->
+  <audio id="remoteAudio" autoplay playsinline></audio>
+
+  <!-- HOST DASHBOARD -->
+  <div class="card" id="dashboard" style="display:none;">
+    <h3>Emotion Dashboard (Host)</h3>
+
+    😊 Happy: <span id="happy">0</span><br />
+    😐 Neutral: <span id="neutral">0</span><br />
+    😢 Sad: <span id="sad">0</span><br />
+    😡 Angry: <span id="angry">0</span><br />
+    😲 Surprised: <span id="surprised">0</span><br />
+    🤢 Disgusted: <span id="disgusted">0</span><br /><br />
+
+    <canvas id="emotionChart" width="250" height="250"></canvas>
+
+    <hr>
+
+    <h3>Meeting Summary</h3>
+
+    <p>
+      Overall Mood:
+      <b><span id="overallMood">Neutral 😐</span></b>
+    </p>
+
+    <p>
+      Engagement Level:
+      <b><span id="engagementLevel">Medium 🙂</span></b>
+    </p>
+  </div>
+
+  <!-- Scripts -->
+  <script src="/socket.io/socket.io.js"></script>
+  <script src="https://unpkg.com/face-api.js@0.22.2/dist/face-api.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script src="/main.js"></script>
+
 </body>
 </html>
