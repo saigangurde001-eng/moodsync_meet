@@ -2,66 +2,69 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <title>MoodSync Meet</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <link rel="stylesheet" href="/style.css">
+  <title>MoodSync</title>
+  <link rel="stylesheet" href="style.css" />
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
-
 <body>
 
-<h1>MoodSync Meet</h1>
-<p>Emotion-aware online meeting</p>
+<!-- JOIN SCREEN -->
+<div id="joinScreen" class="center">
+  <h1>MoodSync</h1>
+  <input id="username" placeholder="Your name" />
+  <input id="roomId" placeholder="Meeting code" />
 
-<div class="card" id="joinSection">
-  <input id="nameInput" placeholder="Your Name" />
-  <button id="hostBtn">Host Meeting</button>
-
-  <input id="roomInput" placeholder="Meeting Code" />
-  <button id="joinBtn">Join Meeting</button>
+  <div class="btn-group">
+    <button id="hostBtn">Host Meeting</button>
+    <button id="joinBtn">Join Meeting</button>
+  </div>
 </div>
 
-<div class="card" id="mediaSection" style="display:none;">
-  <button id="startBtn">Start Camera & Mic</button>
-</div>
+<!-- MEETING SCREEN -->
+<div id="meetingScreen">
 
-<div class="card" id="videoSection">
-  <div class="video-header">
-    <button id="fullscreenBtn">⛶ Fullscreen</button>
-    <!-- 🛑 END MEETING BUTTON (ADDED ONLY) -->
-    <button id="endMeetingBtn" style="background:#dc2626;margin-left:8px;">
-      🛑 End Meeting
-    </button>
+  <div class="top-bar">
+    <span id="meetingCodeDisplay"></span>
+    <div>
+      <button id="fullscreenBtn">Fullscreen</button>
+      <button id="endMeetingBtn" class="danger">End Meeting</button>
+    </div>
   </div>
 
-  <video id="localVideo" autoplay muted playsinline></video>
-  <video id="remoteVideo" autoplay playsinline></video>
-</div>
+  <div class="content">
 
-<audio id="remoteAudio" autoplay></audio>
+    <div class="video-box">
+      <video id="video" autoplay muted></video>
+      <p id="speakerName">Speaking: You</p>
+    </div>
 
-<div class="card" id="dashboard" style="display:none;">
-  <h3>Emotion Dashboard (Host)</h3>
+    <div id="analytics">
+      <h3>Live Emotions</h3>
 
-  😊 Happy: <span id="happy">0</span><br />
-  😐 Neutral: <span id="neutral">0</span><br />
-  😢 Sad: <span id="sad">0</span><br />
-  😡 Angry: <span id="angry">0</span><br />
-  😲 Surprised: <span id="surprised">0</span><br />
-  🤢 Disgusted: <span id="disgusted">0</span><br /><br />
+      <p>Current Emotion: <strong id="emotionText">--</strong></p>
 
-  <canvas id="emotionChart" width="250" height="250"></canvas>
+      <ul>
+        <li>😊 Happy: <span id="happyCount">0</span></li>
+        <li>😐 Neutral: <span id="neutralCount">0</span></li>
+        <li>😢 Sad: <span id="sadCount">0</span></li>
+        <li>😠 Angry: <span id="angryCount">0</span></li>
+        <li>😲 Surprised: <span id="surprisedCount">0</span></li>
+        <li>🤢 Disgusted: <span id="disgustedCount">0</span></li>
+        <li>😨 Fearful: <span id="fearfulCount">0</span></li>
+      </ul>
 
-  <hr>
+      <canvas id="emotionChart"></canvas>
 
-  <h3>Meeting Summary</h3>
-  <p>Overall Mood: <b><span id="overallMood">Neutral 😐</span></b></p>
-  <p>Engagement Level: <b><span id="engagementLevel">Medium 🙂</span></b></p>
+      <p>
+        Overall Mood:
+        <strong id="overallMood">--</strong>
+      </p>
+    </div>
+
+  </div>
 </div>
 
 <script src="/socket.io/socket.io.js"></script>
-<script src="https://unpkg.com/face-api.js@0.22.2/dist/face-api.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-<script src="/main.js"></script>
-
+<script src="script.js"></script>
 </body>
 </html>

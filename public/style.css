@@ -1,58 +1,76 @@
 body {
+  margin: 0;
   font-family: Arial, sans-serif;
-  background: #f4f6f9;
-  text-align: center;
-  padding: 20px;
+  background: #0f172a;
+  color: white;
 }
 
-.card {
-  background: white;
-  padding: 16px;
-  margin: 16px auto;
-  width: 95%;
-  max-width: 900px;
-  border-radius: 12px;
-  box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+.center {
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  gap: 12px;
 }
 
-input, button {
+input {
   padding: 10px;
-  margin: 6px;
-  width: 90%;
-  max-width: 300px;
+  width: 220px;
+  border-radius: 6px;
+  border: none;
 }
 
 button {
-  background: #4f46e5;
-  color: white;
-  border: none;
+  padding: 10px 16px;
   border-radius: 6px;
+  border: none;
   cursor: pointer;
 }
 
-#endMeetingBtn {
-  background: #dc2626;
+.btn-group {
+  display: flex;
+  gap: 10px;
 }
 
-.video-header {
-  width: 100%;
-  text-align: right;
+#meetingScreen {
+  display: none;
+  height: 100vh;
+}
+
+.top-bar {
+  background: #020617;
+  padding: 10px 16px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.content {
+  display: flex;
+  gap: 12px;
+  padding: 12px;
+}
+
+.video-box {
+  text-align: center;
 }
 
 video {
-  width: 48%;
-  max-width: 440px;
-  border-radius: 10px;
+  width: 420px;
+  height: 320px;
   background: black;
+  border-radius: 10px;
 }
 
-@media (max-width: 768px) {
-  video {
-    width: 95%;
-  }
+#analytics {
+  flex: 1;
+  background: #020617;
+  border-radius: 10px;
+  padding: 10px;
 }
 
-#emotionChart {
-  max-width: 250px;
-  margin: auto;
+.danger {
+  background: #dc2626;
+  color: white;
 }

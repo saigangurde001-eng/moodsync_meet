@@ -1,57 +1,32 @@
 const express = require("express");
 const http = require("http");
-const path = require("path");
 const { Server } = require("socket.io");
 
 const app = express();
 const server = http.createServer(app);
 const io = new Server(server);
 
-app.use(express.static(path.join(__dirname, "public")));
-
-app.get("/", (req, res) => {
-  res.sendFile(path.join(__dirname, "public", "index.html"));
-});
+app.use(express.static("public"));
 
 io.on("connection", (socket) => {
-  console.log("User connected:", socket.id);
-
   socket.on("join-room", ({ roomId }) => {
     socket.join(roomId);
 
-    const clients = io.sockets.adapter.rooms.get(roomId);
-    if (clients && clients.size > 1) {
-      socket.to(roomId).emit("ready");
-    }
-  });
+    // DEMO emotion stream (replace with real detection if needed)
+    setInterval(() => {
+      const emotions = [
+        "happy","neutral","sad",
+        "angry","surprised","disgusted","fearful"
+      ];
+      const randomEmotion =
+        emotions[Math.floor(Math.random() * emotions.length)];
 
-  socket.on("offer", ({ roomId, offer }) => {
-    socket.to(roomId).emit("offer", offer);
-  });
-
-  socket.on("answer", ({ roomId, answer }) => {
-    socket.to(roomId).emit("answer", answer);
-  });
-
-  socket.on("ice-candidate", ({ roomId, candidate }) => {
-    socket.to(roomId).emit("ice-candidate", candidate);
-  });
-
-  socket.on("emotion", ({ roomId, emotion }) => {
-    socket.to(roomId).emit("emotion-update", emotion);
-  });
-
-  /* 🛑 END MEETING (ADDED ONLY) */
-  socket.on("end-meeting", ({ roomId }) => {
-    io.to(roomId).emit("meeting-ended");
-  });
-
-  socket.on("disconnect", () => {
-    console.log("User disconnected:", socket.id);
+      socket.to(roomId).emit("emotionUpdate", randomEmotion);
+      socket.emit("emotionUpdate", randomEmotion);
+    }, 3000);
   });
 });
 
-const PORT = process.env.PORT || 3000;
-server.listen(PORT, () => {
-  console.log("Server running on port", PORT);
+server.listen(3000, () => {
+  console.log("MoodSync running on http://localhost:3000");
 });
