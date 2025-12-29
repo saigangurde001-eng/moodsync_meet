@@ -1,6 +1,8 @@
 const socket = io();
 
-/* Load Face API models */
+/* =======================
+   LOAD FACE API MODELS
+======================= */
 Promise.all([
   faceapi.nets.tinyFaceDetector.loadFromUri("/models"),
   faceapi.nets.faceExpressionNet.loadFromUri("/models")
@@ -8,9 +10,22 @@ Promise.all([
   console.log("FaceAPI models loaded");
 });
 
+/* =======================
+   GLOBAL STATE
+======================= */
 let localStream, peer, roomId, chart;
 let isHost = false;
 let userName = "";
+
+/* 🔒 FIXED EMOTION ORDER (VERY IMPORTANT) */
+const emotionLabels = [
+  "happy",
+  "neutral",
+  "sad",
+  "angry",
+  "surprised",
+  "disgusted"
+];
 
 /* Emotion counters */
 const emotions = {
@@ -22,7 +37,9 @@ const emotions = {
   disgusted: 0
 };
 
-/* DOM elements */
+/* =======================
+   DOM ELEMENTS
+======================= */
 const joinSection = document.getElementById("joinSection");
 const mediaSection = document.getElementById("mediaSection");
 const videoSection = document.getElementById("videoSection");
@@ -41,7 +58,9 @@ const fullscreenBtn = document.getElementById("fullscreenBtn");
 const nameInput = document.getElementById("nameInput");
 const roomInput = document.getElementById("roomInput");
 
-/* UI actions */
+/* =======================
+   HOST / JOIN
+======================= */
 hostBtn.onclick = () => {
   userName = nameInput.value.trim();
   if (!userName) return alert("Enter name");
@@ -57,7 +76,8 @@ hostBtn.onclick = () => {
 joinBtn.onclick = () => {
   userName = nameInput.value.trim();
   roomId = roomInput.value.trim().toUpperCase();
-  if (!userName || !roomId) return alert("Enter name & code");
+
+  if (!userName || !roomId) return alert("Enter name & meeting code");
 
   joinSection.style.display = "none";
   mediaSection.style.display = "block";
@@ -65,7 +85,9 @@ joinBtn.onclick = () => {
 
 startBtn.onclick = startMedia;
 
-/* Media */
+/* =======================
+   MEDIA
+======================= */
 function startMedia() {
   navigator.mediaDevices.getUserMedia({ video: true, audio: true })
     .then(stream => {
@@ -76,7 +98,7 @@ function startMedia() {
       mediaSection.style.display = "none";
       videoSection.style.display = "block";
 
-      socket.emit("join-room", { roomId, name: userName, isHost });
+      socket.emit("join-room", { roomId });
 
       createPeer();
 
@@ -86,10 +108,13 @@ function startMedia() {
       }
 
       startEmotionDetection();
-    });
+    })
+    .catch(() => alert("Camera / mic permission denied"));
 }
 
-/* WebRTC */
+/* =======================
+   WEBRTC
+======================= */
 function createPeer() {
   peer = new RTCPeerConnection({
     iceServers: [{ urls: "stun:stun.l.google.com:19302" }]
@@ -108,12 +133,17 @@ function createPeer() {
 
   peer.onicecandidate = e => {
     if (e.candidate) {
-      socket.emit("ice-candidate", { roomId, candidate: e.candidate });
+      socket.emit("ice-candidate", {
+        roomId,
+        candidate: e.candidate
+      });
     }
   };
 }
 
-/* Signaling */
+/* =======================
+   SIGNALING
+======================= */
 socket.on("ready", async () => {
   const offer = await peer.createOffer();
   await peer.setLocalDescription(offer);
@@ -130,7 +160,9 @@ socket.on("offer", async offer => {
 socket.on("answer", ans => peer.setRemoteDescription(ans));
 socket.on("ice-candidate", c => peer.addIceCandidate(c));
 
-/* Emotion detection */
+/* =======================
+   EMOTION DETECTION
+======================= */
 function startEmotionDetection() {
   const emotionVideo = document.createElement("video");
   emotionVideo.srcObject = localStream;
@@ -149,14 +181,17 @@ function startEmotionDetection() {
     if (!result) return;
 
     const expressions = result.expressions;
-    const emotion = Object.keys(expressions)
-      .reduce((a, b) => expressions[a] > expressions[b] ? a : b);
+    const emotion = Object.keys(expressions).reduce(
+      (a, b) => expressions[a] > expressions[b] ? a : b
+    );
 
     socket.emit("emotion", { roomId, emotion });
   }, 5000);
 }
 
-/* Dashboard */
+/* =======================
+   DASHBOARD (HOST ONLY)
+======================= */
 socket.on("emotion-update", emotion => {
   if (!isHost || !emotions.hasOwnProperty(emotion)) return;
 
@@ -165,43 +200,43 @@ socket.on("emotion-update", emotion => {
   updateMeetingSummary();
 });
 
+/* 🎨 FIXED PIE CHART */
 function initChart() {
   chart = new Chart(emotionChartCanvas, {
-  type: "pie",
-  data: {
-    labels: Object.keys(emotions),
-    datasets: [{
-      data: Object.values(emotions),
-      backgroundColor: [
-        "#22c55e", // happy - green
-        "#9ca3af", // neutral - gray
-        "#3b82f6", // sad - blue
-        "#ef4444", // angry - red
-        "#facc15", // surprised - yellow
-        "#a855f7"  // disgusted - purple
-      ]
-    }]
-  },
-  options: {
-    plugins: {
-      legend: {
-        position: "bottom"
+    type: "pie",
+    data: {
+      labels: emotionLabels,
+      datasets: [{
+        data: emotionLabels.map(e => emotions[e]),
+        backgroundColor: [
+          "#22c55e", // happy
+          "#9ca3af", // neutral
+          "#3b82f6", // sad
+          "#ef4444", // angry
+          "#facc15", // surprised
+          "#a855f7"  // disgusted
+        ]
+      }]
+    },
+    options: {
+      plugins: {
+        legend: { position: "bottom" }
       }
     }
-  }
-});
-
+  });
 }
 
 function updateDashboard() {
-  for (let e in emotions) {
+  for (let e of emotionLabels) {
     document.getElementById(e).innerText = emotions[e];
   }
-  chart.data.datasets[0].data = Object.values(emotions);
+  chart.data.datasets[0].data = emotionLabels.map(e => emotions[e]);
   chart.update();
 }
 
-/* Meeting summary */
+/* =======================
+   MEETING SUMMARY
+======================= */
 function updateMeetingSummary() {
   const positive = emotions.happy + emotions.surprised;
   const negative = emotions.sad + emotions.angry + emotions.disgusted;
@@ -221,7 +256,9 @@ function updateMeetingSummary() {
   document.getElementById("engagementLevel").innerText = engagement;
 }
 
-/* Fullscreen toggle */
+/* =======================
+   FULLSCREEN
+======================= */
 fullscreenBtn.onclick = () => {
   if (!document.fullscreenElement) {
     videoSection.requestFullscreen();
