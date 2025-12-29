@@ -167,12 +167,30 @@ socket.on("emotion-update", emotion => {
 
 function initChart() {
   chart = new Chart(emotionChartCanvas, {
-    type: "pie",
-    data: {
-      labels: Object.keys(emotions),
-      datasets: [{ data: Object.values(emotions) }]
+  type: "pie",
+  data: {
+    labels: Object.keys(emotions),
+    datasets: [{
+      data: Object.values(emotions),
+      backgroundColor: [
+        "#22c55e", // happy - green
+        "#9ca3af", // neutral - gray
+        "#3b82f6", // sad - blue
+        "#ef4444", // angry - red
+        "#facc15", // surprised - yellow
+        "#a855f7"  // disgusted - purple
+      ]
+    }]
+  },
+  options: {
+    plugins: {
+      legend: {
+        position: "bottom"
+      }
     }
-  });
+  }
+});
+
 }
 
 function updateDashboard() {
