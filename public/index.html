@@ -24,16 +24,29 @@
   <button id="startBtn">Start Camera & Mic</button>
 </div>
 
-<div class="card" id="videoSection" style="display:none;">
+<div class="card" id="videoSection">
   <button id="fullscreenBtn">⛶ Fullscreen</button>
-  <video id="localVideo" autoplay muted playsinline></video>
-  <video id="remoteVideo" autoplay playsinline></video>
+
+  <div class="video-wrapper">
+    <span class="video-label" id="localLabel">YOU</span>
+    <video id="localVideo" autoplay muted playsinline></video>
+  </div>
+
+  <div class="video-wrapper">
+    <span class="video-label" id="remoteLabel">PARTICIPANT</span>
+    <video id="remoteVideo" autoplay playsinline></video>
+  </div>
 </div>
+
 
 <audio id="remoteAudio" autoplay></audio>
 
 <div class="card" id="chatSection" style="display:none;">
-  <h3>Meeting Chat</h3>
+  <h3>
+  Meeting Chat
+  <span id="chatDot" class="chat-dot" style="display:none;"></span>
+</h3>
+
   <div id="chatBox"></div>
   <div class="chat-input">
     <input id="chatInput" placeholder="Type a message..." />
