@@ -243,4 +243,8 @@ canvas {
   border-radius: 50%;
   margin-left: 6px;
 }
+/* Hide video section until meeting starts */
+#videoSection {
+  display: none;
+}
 
