@@ -1,5 +1,5 @@
 /* =======================
-   GLOBAL STYLES
+   GLOBAL BASE
 ======================= */
 * {
   box-sizing: border-box;
@@ -14,82 +14,131 @@ body {
   text-align: center;
 }
 
-h1 {
-  margin-top: 20px;
-  font-size: 2.2rem;
-  color: #1f2937;
+/* =======================
+   HERO SECTION (HOME)
+======================= */
+.hero {
+  margin-top: 60px;
+  margin-bottom: 30px;
+  padding: 0 20px;
 }
 
-p {
+.hero h1 {
+  font-size: 3rem;
+  font-weight: 700;
+  letter-spacing: -0.5px;
+  margin-bottom: 12px;
+}
+
+.tagline {
+  font-size: 1.15rem;
   color: #4b5563;
-  margin-bottom: 20px;
+  max-width: 600px;
+  margin: 0 auto;
+  line-height: 1.5;
 }
 
 /* =======================
-   CARD LAYOUT
+   CARD BASE
 ======================= */
 .card {
-  background: white;
-  padding: 18px;
-  margin: 15px auto;
+  background: #ffffff;
+  padding: 20px;
+  margin: 20px auto;
   width: 95%;
   max-width: 900px;
-  border-radius: 14px;
-  box-shadow: 0 10px 25px rgba(0,0,0,0.08);
+  border-radius: 16px;
+  box-shadow: 0 15px 35px rgba(0, 0, 0, 0.08);
 }
 
 /* =======================
-   BUTTONS & INPUTS
+   JOIN / HOST CARD
 ======================= */
-button {
-  padding: 10px 16px;
-  border-radius: 8px;
-  border: none;
-  background: #2563eb;
-  color: white;
+.join-card {
+  max-width: 420px;
+  padding: 26px;
+  animation: fadeUp 0.6s ease;
+}
+
+.join-card input {
+  width: 100%;
+  padding: 12px;
+  margin-bottom: 14px;
+  border-radius: 10px;
+  border: 1px solid #d1d5db;
   font-size: 14px;
+}
+
+.join-card input:focus {
+  outline: none;
+  border-color: #2563eb;
+}
+
+/* Buttons */
+.join-card button {
+  width: 100%;
+  padding: 12px;
+  font-size: 15px;
+  font-weight: 500;
+  border-radius: 10px;
+  border: none;
   cursor: pointer;
   transition: 0.2s ease;
 }
 
-button:hover {
-  background: #1d4ed8;
+/* Host button */
+#hostBtn {
+  background: linear-gradient(135deg, #2563eb, #1d4ed8);
+  color: white;
+  margin-bottom: 10px;
 }
 
-input {
-  padding: 10px;
-  border-radius: 8px;
-  border: 1px solid #d1d5db;
-  font-size: 14px;
-  width: 100%;
+#hostBtn:hover {
+  background: linear-gradient(135deg, #1d4ed8, #1e40af);
 }
 
-input:focus {
-  outline: none;
-  border-color: #2563eb;
+/* Divider */
+.divider {
+  margin: 14px 0;
+  font-size: 13px;
+  color: #6b7280;
+}
+
+/* Join button */
+#joinBtn {
+  background: #111827;
+  color: white;
+}
+
+#joinBtn:hover {
+  background: #000000;
 }
 
 /* =======================
    VIDEO SECTION
 ======================= */
 #videoSection {
-  display: flex;
-  flex-direction: column;
+  display: none;
   gap: 12px;
+}
+
+.video-wrapper {
+  position: relative;
+  width: 100%;
 }
 
 #videoSection video {
   width: 100%;
   height: 260px;
   object-fit: cover;
-  border-radius: 12px;
+  border-radius: 14px;
   background: black;
 }
 
-/* Desktop: side by side */
+/* Desktop: side-by-side */
 @media (min-width: 768px) {
   #videoSection {
-    flex-direction: row;
+    display: flex;
     justify-content: space-between;
   }
 
@@ -99,10 +148,24 @@ input:focus {
   }
 }
 
+/* Video labels */
+.video-label {
+  position: absolute;
+  top: 10px;
+  left: 10px;
+  background: rgba(0,0,0,0.7);
+  color: white;
+  font-size: 12px;
+  padding: 4px 8px;
+  border-radius: 6px;
+  z-index: 2;
+}
+
 /* Fullscreen button */
 #fullscreenBtn {
-  margin-bottom: 10px;
   background: #111827;
+  color: white;
+  margin-bottom: 10px;
 }
 
 #fullscreenBtn:hover {
@@ -112,10 +175,6 @@ input:focus {
 /* =======================
    CHAT SECTION
 ======================= */
-#chatSection {
-  max-width: 900px;
-}
-
 #chatBox {
   height: 220px;
   overflow-y: auto;
@@ -143,6 +202,32 @@ input:focus {
 
 #chatInput {
   flex: 1;
+  padding: 10px;
+  border-radius: 8px;
+  border: 1px solid #d1d5db;
+}
+
+#sendChatBtn {
+  padding: 10px 14px;
+  border-radius: 8px;
+  border: none;
+  background: #2563eb;
+  color: white;
+  cursor: pointer;
+}
+
+#sendChatBtn:hover {
+  background: #1d4ed8;
+}
+
+/* Chat notification dot */
+.chat-dot {
+  display: inline-block;
+  width: 10px;
+  height: 10px;
+  background: red;
+  border-radius: 50%;
+  margin-left: 6px;
 }
 
 /* =======================
@@ -154,14 +239,8 @@ input:focus {
 
 #dashboard h3 {
   text-align: center;
-  margin-bottom: 10px;
 }
 
-#dashboard span {
-  font-weight: bold;
-}
-
-/* Emotion colors */
 #happy { color: #22c55e; }
 #neutral { color: #6b7280; }
 #sad { color: #3b82f6; }
@@ -169,82 +248,37 @@ input:focus {
 #surprised { color: #facc15; }
 #disgusted { color: #a855f7; }
 
-canvas {
+/* =======================
+   EMOTION GLOW
+======================= */
+.glow-happy { box-shadow: 0 0 25px rgba(34,197,94,0.9); }
+.glow-neutral { box-shadow: 0 0 20px rgba(156,163,175,0.8); }
+.glow-sad { box-shadow: 0 0 25px rgba(59,130,246,0.9); }
+.glow-angry { box-shadow: 0 0 25px rgba(239,68,68,0.9); }
+.glow-surprised { box-shadow: 0 0 25px rgba(250,204,21,0.9); }
+.glow-disgusted { box-shadow: 0 0 25px rgba(168,85,247,0.9); }
+
+/* =======================
+   ANIMATION
+======================= */
+@keyframes fadeUp {
+  from {
+    opacity: 0;
+    transform: translateY(18px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* =======================
+   FOOTER NOTE
+======================= */
+body::after {
+  content: "Designed for emotion-aware, human-centric online meetings";
   display: block;
-  margin: 15px auto;
+  margin: 50px 0 20px;
+  font-size: 13px;
+  color: #6b7280;
 }
-
-/* =======================
-   RESPONSIVE POLISH
-======================= */
-@media (max-width: 480px) {
-  h1 {
-    font-size: 1.8rem;
-  }
-
-  .card {
-    padding: 14px;
-  }
-
-  #videoSection video {
-    height: 220px;
-  }
-}
-/* =======================
-   VIDEO LABELS
-======================= */
-.video-wrapper {
-  position: relative;
-  width: 100%;
-}
-
-.video-label {
-  position: absolute;
-  top: 8px;
-  left: 8px;
-  background: rgba(0,0,0,0.7);
-  color: white;
-  font-size: 12px;
-  padding: 4px 8px;
-  border-radius: 6px;
-  z-index: 2;
-}
-
-/* =======================
-   EMOTION GLOW (HOST)
-======================= */
-.glow-happy {
-  box-shadow: 0 0 25px rgba(34,197,94,0.9);
-}
-.glow-neutral {
-  box-shadow: 0 0 20px rgba(156,163,175,0.8);
-}
-.glow-sad {
-  box-shadow: 0 0 25px rgba(59,130,246,0.9);
-}
-.glow-angry {
-  box-shadow: 0 0 25px rgba(239,68,68,0.9);
-}
-.glow-surprised {
-  box-shadow: 0 0 25px rgba(250,204,21,0.9);
-}
-.glow-disgusted {
-  box-shadow: 0 0 25px rgba(168,85,247,0.9);
-}
-
-/* =======================
-   CHAT NOTIFICATION DOT
-======================= */
-.chat-dot {
-  display: inline-block;
-  width: 10px;
-  height: 10px;
-  background: red;
-  border-radius: 50%;
-  margin-left: 6px;
-}
-/* Hide video section until meeting starts */
-#videoSection {
-  display: none;
-}
-
