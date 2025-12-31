@@ -37,3 +37,23 @@ video {
   display: flex;
   gap: 8px;
 }
+
+#chatInput {
+  flex: 1;
+  padding: 8px;
+  border-radius: 6px;
+  border: 1px solid #ccc;
+}
+
+#sendChatBtn {
+  padding: 8px 12px;
+  border-radius: 6px;
+  border: none;
+  background: #2563eb;
+  color: white;
+  cursor: pointer;
+}
+
+#sendChatBtn:hover {
+  background: #1d4ed8;
+}

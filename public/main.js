@@ -1,6 +1,6 @@
 const socket = io();
 
-/* FACE API */
+/* LOAD FACE API */
 Promise.all([
   faceapi.nets.tinyFaceDetector.loadFromUri("/models"),
   faceapi.nets.faceExpressionNet.loadFromUri("/models")
@@ -17,8 +17,8 @@ const emotions = { happy:0, neutral:0, sad:0, angry:0, surprised:0, disgusted:0 
 const joinSection = document.getElementById("joinSection");
 const mediaSection = document.getElementById("mediaSection");
 const videoSection = document.getElementById("videoSection");
-const dashboard = document.getElementById("dashboard");
 const chatSection = document.getElementById("chatSection");
+const dashboard = document.getElementById("dashboard");
 
 const localVideo = document.getElementById("localVideo");
 const remoteVideo = document.getElementById("remoteVideo");
@@ -69,10 +69,12 @@ function startMedia() {
     mediaSection.style.display = "none";
     videoSection.style.display = "block";
     chatSection.style.display = "block";
+    chatInput.focus();
 
     socket.emit("join-room", { roomId, name:userName, isHost });
 
     createPeer();
+
     if (isHost) {
       dashboard.style.display = "block";
       initChart();
@@ -117,16 +119,19 @@ socket.on("offer", async offer => {
 socket.on("answer", ans => peer.setRemoteDescription(ans));
 socket.on("ice-candidate", c => peer.addIceCandidate(c));
 
-/* EMOTIONS */
+/* EMOTION DETECTION */
 function startEmotionDetection() {
   const v = document.createElement("video");
   v.srcObject = localStream;
+  v.muted = true;
+  v.playsInline = true;
   v.play();
 
   setInterval(async () => {
     const r = await faceapi
       .detectSingleFace(v, new faceapi.TinyFaceDetectorOptions())
       .withFaceExpressions();
+
     if (!r) return;
 
     const e = Object.keys(r.expressions)
@@ -137,7 +142,8 @@ function startEmotionDetection() {
 }
 
 socket.on("emotion-update", e => {
-  if (!isHost || !emotions[e]) return;
+  if (!isHost || !emotions.hasOwnProperty(e)) return;
+
   emotions[e]++;
   chart.data.datasets[0].data = emotionLabels.map(x=>emotions[x]);
   chart.update();
@@ -149,28 +155,36 @@ function initChart() {
     type:"pie",
     data:{
       labels:emotionLabels,
-      datasets:[{ data:emotionLabels.map(e=>emotions[e]) }]
+      datasets:[{
+        data:emotionLabels.map(e=>emotions[e]),
+        backgroundColor:["#22c55e","#9ca3af","#3b82f6","#ef4444","#facc15","#a855f7"]
+      }]
     }
   });
 }
 
 /* CHAT */
 sendChatBtn.onclick = sendChat;
-chatInput.onkeypress = e => e.key==="Enter" && sendChat();
+chatInput.addEventListener("keypress", e => {
+  if (e.key === "Enter") sendChat();
+});
 
 function sendChat() {
-  if (!chatInput.value) return;
+  const msg = chatInput.value.trim();
+  if (!msg) return;
+
   socket.emit("chat-message", {
     roomId,
     name:userName,
-    message:chatInput.value
+    message:msg
   });
-  chatInput.value="";
+
+  chatInput.value = "";
 }
 
 socket.on("chat-message", d => {
   const div = document.createElement("div");
-  div.className="chat-message";
+  div.className = "chat-message";
   div.innerHTML = `<b>${d.name}</b> (${d.time}): ${d.message}`;
   chatBox.appendChild(div);
   chatBox.scrollTop = chatBox.scrollHeight;

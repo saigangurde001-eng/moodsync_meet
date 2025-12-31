@@ -22,18 +22,13 @@ io.on("connection", socket => {
 
     roomParticipants[roomId][socket.id] = { name, isHost };
 
-    io.to(roomId).emit(
-      "participants-update",
-      Object.values(roomParticipants[roomId])
-    );
-
     const clients = io.sockets.adapter.rooms.get(roomId);
     if (clients && clients.size > 1) {
       socket.to(roomId).emit("ready");
     }
   });
 
-  /* EMOTION DATA */
+  /* EMOTIONS */
   socket.on("emotion", ({ roomId, emotion }) => {
     socket.to(roomId).emit("emotion-update", emotion);
   });
@@ -47,7 +42,7 @@ io.on("connection", socket => {
     });
   });
 
-  /* WEBRTC SIGNALING */
+  /* WEBRTC */
   socket.on("offer", ({ roomId, offer }) => {
     socket.to(roomId).emit("offer", offer);
   });
@@ -61,15 +56,6 @@ io.on("connection", socket => {
   });
 
   socket.on("disconnect", () => {
-    for (const roomId in roomParticipants) {
-      if (roomParticipants[roomId][socket.id]) {
-        delete roomParticipants[roomId][socket.id];
-        io.to(roomId).emit(
-          "participants-update",
-          Object.values(roomParticipants[roomId])
-        );
-      }
-    }
     console.log("User disconnected:", socket.id);
   });
 });

@@ -9,70 +9,58 @@
 
 <body>
 
-  <h1>MoodSync Meet</h1>
-  <p>Emotion-aware online meeting</p>
+<h1>MoodSync Meet</h1>
+<p>Emotion-aware online meeting</p>
 
-  <!-- JOIN / HOST -->
-  <div class="card" id="joinSection">
-    <input id="nameInput" placeholder="Your Name" />
-    <button id="hostBtn">Host Meeting</button>
+<div class="card" id="joinSection">
+  <input id="nameInput" placeholder="Your Name" />
+  <button id="hostBtn">Host Meeting</button>
 
-    <input id="roomInput" placeholder="Meeting Code" />
-    <button id="joinBtn">Join Meeting</button>
+  <input id="roomInput" placeholder="Meeting Code" />
+  <button id="joinBtn">Join Meeting</button>
+</div>
+
+<div class="card" id="mediaSection" style="display:none;">
+  <button id="startBtn">Start Camera & Mic</button>
+</div>
+
+<div class="card" id="videoSection" style="display:none;">
+  <button id="fullscreenBtn">⛶ Fullscreen</button>
+  <video id="localVideo" autoplay muted playsinline></video>
+  <video id="remoteVideo" autoplay playsinline></video>
+</div>
+
+<audio id="remoteAudio" autoplay></audio>
+
+<div class="card" id="chatSection" style="display:none;">
+  <h3>Meeting Chat</h3>
+  <div id="chatBox"></div>
+  <div class="chat-input">
+    <input id="chatInput" placeholder="Type a message..." />
+    <button id="sendChatBtn">Send</button>
   </div>
+</div>
 
-  <!-- START MEDIA -->
-  <div class="card" id="mediaSection" style="display:none;">
-    <button id="startBtn">Start Camera & Mic</button>
-  </div>
+<div class="card" id="dashboard" style="display:none;">
+  <h3>Emotion Dashboard (Host)</h3>
+  😊 Happy: <span id="happy">0</span><br>
+  😐 Neutral: <span id="neutral">0</span><br>
+  😢 Sad: <span id="sad">0</span><br>
+  😡 Angry: <span id="angry">0</span><br>
+  😲 Surprised: <span id="surprised">0</span><br>
+  🤢 Disgusted: <span id="disgusted">0</span><br><br>
 
-  <!-- VIDEO -->
-  <div class="card" id="videoSection" style="display:none;">
-    <div class="video-header">
-      <button id="fullscreenBtn">⛶ Fullscreen</button>
-    </div>
+  <canvas id="emotionChart" width="250" height="250"></canvas>
 
-    <video id="localVideo" autoplay muted playsinline></video>
-    <video id="remoteVideo" autoplay playsinline></video>
-  </div>
+  <h3>Meeting Summary</h3>
+  <p>Overall Mood: <b><span id="overallMood">Neutral 😐</span></b></p>
+  <p>Engagement Level: <b><span id="engagementLevel">Medium 🙂</span></b></p>
+</div>
 
-  <audio id="remoteAudio" autoplay playsinline></audio>
-
-  <!-- CHAT -->
-  <div class="card" id="chatSection" style="display:none;">
-    <h3>Meeting Chat</h3>
-    <div id="chatBox"></div>
-
-    <div class="chat-input">
-      <input id="chatInput" placeholder="Type a message..." />
-      <button id="sendChatBtn">Send</button>
-    </div>
-  </div>
-
-  <!-- HOST DASHBOARD -->
-  <div class="card" id="dashboard" style="display:none;">
-    <h3>Emotion Dashboard (Host)</h3>
-
-    😊 Happy: <span id="happy">0</span><br />
-    😐 Neutral: <span id="neutral">0</span><br />
-    😢 Sad: <span id="sad">0</span><br />
-    😡 Angry: <span id="angry">0</span><br />
-    😲 Surprised: <span id="surprised">0</span><br />
-    🤢 Disgusted: <span id="disgusted">0</span><br /><br />
-
-    <canvas id="emotionChart" width="250" height="250"></canvas>
-
-    <hr>
-
-    <h3>Meeting Summary</h3>
-    <p>Overall Mood: <b><span id="overallMood">Neutral 😐</span></b></p>
-    <p>Engagement Level: <b><span id="engagementLevel">Medium 🙂</span></b></p>
-  </div>
-
-  <script src="/socket.io/socket.io.js"></script>
-  <script src="https://unpkg.com/face-api.js@0.22.2/dist/face-api.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-  <script src="/main.js"></script>
+<script src="/socket.io/socket.io.js"></script>
+<script src="https://unpkg.com/face-api.js@0.22.2/dist/face-api.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script src="/main.js"></script>
 
 </body>
 </html>
