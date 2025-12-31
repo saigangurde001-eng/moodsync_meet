@@ -144,10 +144,19 @@ function startEmotionDetection() {
 socket.on("emotion-update", e => {
   if (!isHost || !emotions.hasOwnProperty(e)) return;
 
+  // increment emotion count
   emotions[e]++;
-  chart.data.datasets[0].data = emotionLabels.map(x=>emotions[x]);
+
+  // ✅ UPDATE TEXT COUNTERS
+  emotionLabels.forEach(label => {
+    document.getElementById(label).innerText = emotions[label];
+  });
+
+  // ✅ UPDATE PIE CHART
+  chart.data.datasets[0].data = emotionLabels.map(x => emotions[x]);
   chart.update();
 });
+
 
 /* CHART */
 function initChart() {
