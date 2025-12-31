@@ -4,8 +4,6 @@
   <meta charset="UTF-8" />
   <title>MoodSync Meet</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-
-  <!-- External CSS -->
   <link rel="stylesheet" href="/style.css">
 </head>
 
@@ -28,8 +26,8 @@
     <button id="startBtn">Start Camera & Mic</button>
   </div>
 
-  <!-- VIDEO SECTION -->
-  <div class="card" id="videoSection">
+  <!-- VIDEO -->
+  <div class="card" id="videoSection" style="display:none;">
     <div class="video-header">
       <button id="fullscreenBtn">⛶ Fullscreen</button>
     </div>
@@ -38,8 +36,18 @@
     <video id="remoteVideo" autoplay playsinline></video>
   </div>
 
-  <!-- AUDIO -->
   <audio id="remoteAudio" autoplay playsinline></audio>
+
+  <!-- CHAT -->
+  <div class="card" id="chatSection" style="display:none;">
+    <h3>Meeting Chat</h3>
+    <div id="chatBox"></div>
+
+    <div class="chat-input">
+      <input id="chatInput" placeholder="Type a message..." />
+      <button id="sendChatBtn">Send</button>
+    </div>
+  </div>
 
   <!-- HOST DASHBOARD -->
   <div class="card" id="dashboard" style="display:none;">
@@ -57,19 +65,10 @@
     <hr>
 
     <h3>Meeting Summary</h3>
-
-    <p>
-      Overall Mood:
-      <b><span id="overallMood">Neutral 😐</span></b>
-    </p>
-
-    <p>
-      Engagement Level:
-      <b><span id="engagementLevel">Medium 🙂</span></b>
-    </p>
+    <p>Overall Mood: <b><span id="overallMood">Neutral 😐</span></b></p>
+    <p>Engagement Level: <b><span id="engagementLevel">Medium 🙂</span></b></p>
   </div>
 
-  <!-- Scripts -->
   <script src="/socket.io/socket.io.js"></script>
   <script src="https://unpkg.com/face-api.js@0.22.2/dist/face-api.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>

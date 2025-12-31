@@ -33,12 +33,21 @@ io.on("connection", socket => {
     }
   });
 
-  // Emotion data
+  /* EMOTION DATA */
   socket.on("emotion", ({ roomId, emotion }) => {
     socket.to(roomId).emit("emotion-update", emotion);
   });
 
-  // WebRTC signaling
+  /* CHAT */
+  socket.on("chat-message", ({ roomId, name, message }) => {
+    io.to(roomId).emit("chat-message", {
+      name,
+      message,
+      time: new Date().toLocaleTimeString()
+    });
+  });
+
+  /* WEBRTC SIGNALING */
   socket.on("offer", ({ roomId, offer }) => {
     socket.to(roomId).emit("offer", offer);
   });
@@ -69,7 +78,3 @@ const PORT = process.env.PORT || 3000;
 server.listen(PORT, () => {
   console.log("Server running on port", PORT);
 });
-
-
-
-
