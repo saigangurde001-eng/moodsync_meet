@@ -127,10 +127,16 @@ function createPeer() {
   );
 
   peer.ontrack = e => {
-    remoteVideo.srcObject = e.streams[0];
-    remoteAudio.srcObject = e.streams[0];
-    remoteLabel.innerText = isHost ? "PARTICIPANT" : "HOST";
-  };
+  remoteVideo.srcObject = e.streams[0];
+  remoteAudio.srcObject = e.streams[0];
+
+  remoteLabel.innerText = isHost ? "PARTICIPANT" : "HOST";
+
+  // 🔒 Autoplay-safe (important for mobile & strict browsers)
+  remoteVideo.play().catch(() => {});
+  remoteAudio.play().catch(() => {});
+};
+
 
   peer.onicecandidate = e => {
     if (e.candidate) {
